@@ -1,5 +1,6 @@
 mod cpu;
 mod types;
+mod cpu_register;
 
 #[derive(Debug)]
 pub struct Context {
