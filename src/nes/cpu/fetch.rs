@@ -6,8 +6,8 @@ use super::super::types::{Data, Addr, Word};
 // fetch value from current pc addr
 // Increment PC
 pub fn fetch<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
-  let code: u8 = 0xA9;
-  // TODO: PC++
+  let code = bus.read(register.get_PC());
+  register.increment_PC();
   code
 }
 

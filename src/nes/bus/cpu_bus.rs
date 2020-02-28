@@ -4,7 +4,7 @@ use super::super::types::{Data, Addr, Word};
 pub trait CpuBus {
   fn read(&mut self, addr: Addr) -> Data;
   fn read_word(&mut self, addr: Addr) -> Word;
-  fn write(&mut self, addr: Addr);
+  fn write(&mut self, addr: Addr, data: Data);
 }
 
 impl<'a> CpuBus for Bus<'a> {
@@ -16,7 +16,7 @@ impl<'a> CpuBus for Bus<'a> {
     0x00 as Word
   }
 
-  fn write(&mut self, addr: Addr) {
+  fn write(&mut self, addr: Addr, data: Data) {
 
   }
 }
