@@ -1,3 +1,4 @@
+mod bus;
 mod cpu;
 mod cpu_register;
 mod types;
