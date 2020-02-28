@@ -4,6 +4,8 @@ mod cpu_register;
 mod types;
 mod helper;
 
+use self::bus::*;
+
 #[derive(Debug)]
 pub struct Context {
 
@@ -15,5 +17,7 @@ pub fn run(){
 
 pub fn debug_run(){
   let mut register = cpu_register::Register::new();
-  cpu::run(&mut register);
+  let mut x = 0;
+  let mut cpu_bus = bus::bus::Bus::new(&x);
+  cpu::run(&mut register, &mut cpu_bus);
 }
