@@ -137,6 +137,22 @@ pub fn adc<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut
     .set_A(result);
 }
 
+pub fn and_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  let c = register.get_A() & (operand as Data);
+  register
+    .update_status_negative_by(c)
+    .update_status_zero_by(c)
+    .set_A(c);
+}
+
+pub fn and<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let c = register.get_A() & (bus.read(operand));
+  register
+    .update_status_negative_by(c)
+    .update_status_zero_by(c)
+    .set_A(c);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -358,5 +374,21 @@ mod test {
     assert_eq!(r.get_status_overflow(), false)
   }
 
+  #[test]
+  fn test_and_imm() {
+    let mut r = Register::new();
+    r.set_A(0x11);
+    and_imm(0x01, &mut r);
+    assert_eq!(r.get_A(), 0x01)
+  }
 
+  #[test]
+  fn test_and() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0x11);
+    b.memory[0x80] = 0x01;
+    and(0x80, &mut r, &mut b);
+    assert_eq!(r.get_A(), 0x01)
+  }
 }

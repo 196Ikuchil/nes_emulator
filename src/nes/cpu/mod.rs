@@ -36,6 +36,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::TYA => tya(register),
     Instruction::ADC if code.mode == Addressing::Immediate => adc_imm(operand, register),
     Instruction::ADC => adc(operand, register, cpu_bus),
+    Instruction::AND if code.mode == Addressing::Immediate => and_imm(operand, register),
+    Instruction::AND => and(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -248,5 +250,30 @@ mod test {
     b.memory[0x80] = 0x98;
     run(&mut r, &mut b);
     assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_and_imm() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0x01);
+    b.memory[0x80] = 0x29;
+    b.memory[0x81] = 0x11;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0x01)
+  }
+
+  #[test]
+  fn test_run_and_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0x01);
+    b.memory[0x80] = 0x25;
+    b.memory[0x81] = 0x22;
+    b.memory[0x22] = 0x11;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0x01)
   }
 }
