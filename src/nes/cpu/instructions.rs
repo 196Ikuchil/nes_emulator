@@ -19,6 +19,21 @@ pub fn lda<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .update_status_zero_by(v);
 }
 
+pub fn ldx_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  register
+    .set_X(operand as Data)
+    .update_status_negative_by(operand as Data)
+    .update_status_zero_by(operand as Data);
+}
+
+pub fn ldx<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let v = bus.read(operand as Addr);
+  register
+    .set_X(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
+}
+
 
 #[cfg(test)]
 mod test {
@@ -67,5 +82,21 @@ mod test {
     b.memory[0xA5] = 0xFF;
     lda(0xA5, &mut r, &mut b);
     assert_eq!(r.get_A(),0xFF);
+  }
+
+  #[test]
+  fn test_ldx_imm() {
+    let mut r = Register::new();
+    ldx_imm(0xFF, &mut r);
+    assert_eq!(r.get_X(), 0xFF)
+  }
+
+  #[test]
+  fn test_ldx() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    b.memory[0xA5] = 0xFF;
+    ldx(0xA5, &mut r, &mut b);
+    assert_eq!(r.get_X(),0xFF)
   }
 }
