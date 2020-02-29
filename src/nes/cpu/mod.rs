@@ -23,6 +23,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::LDA => lda(operand, register, cpu_bus),
     Instruction::LDX if code.mode == Addressing::Immediate => ldx_imm(operand, register),
     Instruction::LDX => ldx(operand, register, cpu_bus),
+    Instruction::LDY if code.mode == Addressing::Immediate => ldy_imm(operand, register),
+    Instruction::LDY => ldy(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -106,5 +108,29 @@ mod test {
     b.memory[0x12] = 0xFF;
     run(&mut r, &mut b);
     assert_eq!(r.get_X(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_ldy_imm() {
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xA0;
+    b.memory[0x81] = 0xFF;
+    run(&mut r ,&mut b);
+    assert_eq!(r.get_Y(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_ldy_zpg_x() {
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    r.set_PC(0x80);
+    r.set_X(0x01);
+    b.memory[0x80] = 0xB4;
+    b.memory[0x81] = 0x11;
+    b.memory[0x12] = 0xFF;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_Y(), 0xFF)
   }
 }

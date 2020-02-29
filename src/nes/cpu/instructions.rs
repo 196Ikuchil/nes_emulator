@@ -34,6 +34,21 @@ pub fn ldx<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .update_status_zero_by(v);
 }
 
+pub fn ldy_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  register
+    .set_Y(operand as Data)
+    .update_status_negative_by(operand as Data)
+    .update_status_zero_by(operand as Data);
+}
+
+pub fn ldy<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut U) {
+  let v = bus.read(operand);
+  register
+    .set_Y(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
+}
+
 
 #[cfg(test)]
 mod test {
@@ -98,5 +113,21 @@ mod test {
     b.memory[0xA5] = 0xFF;
     ldx(0xA5, &mut r, &mut b);
     assert_eq!(r.get_X(),0xFF)
+  }
+
+  #[test]
+  fn test_ldy_imm() {
+    let mut r = Register::new();
+    ldy_imm(0xFF, &mut r);
+    assert_eq!(r.get_Y(), 0xFF)
+  }
+
+  #[test]
+  fn test_ldy() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    b.memory[0xA5] = 0xFF;
+    ldy(0xA5, &mut r, &mut b);
+    assert_eq!(r.get_Y(),0xFF)
   }
 }
