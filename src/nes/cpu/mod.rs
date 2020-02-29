@@ -40,6 +40,7 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::AND => and(operand, register, cpu_bus),
     Instruction::ASL if code.mode == Addressing::Accumulator => asl_acc(register),
     Instruction::ASL => asl(operand, register, cpu_bus),
+    Instruction::BIT => bit(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -300,5 +301,20 @@ mod test {
     b.memory[0x10] = 0x01;
     run(&mut r, &mut b);
     assert_eq!(b.memory[0x10], 0x02)
+  }
+
+  #[test]
+  fn test_run_bit_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x24;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x40;
+    r.set_A(0x40);
+    run(&mut r, &mut b);
+    assert_eq!(r.get_status_zero(), false);
+    assert_eq!(r.get_status_negative(), false);
+    assert_eq!(r.get_status_overflow(), true)
   }
 }

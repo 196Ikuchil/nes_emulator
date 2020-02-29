@@ -171,6 +171,15 @@ pub fn asl<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
   bus.write(operand, fetched);
 }
 
+pub fn bit<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let fetched = bus.read(operand);
+  let a = register.get_A();
+  register
+    .update_status_negative_by(fetched)
+    .update_status_zero_by(a & fetched)
+    .set_status_overflow((fetched & 0x40) == 0x40);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -425,5 +434,17 @@ mod test {
     b.memory[0x80] = 0x01;
     asl(0x80, &mut r, &mut b);
     assert_eq!(b.read(0x80), 0x02)
+  }
+
+  #[test]
+  fn test_bit() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0x40);
+    b.memory[0x80] = 0x40;
+    bit(0x80, &mut r, &mut b);
+    assert_eq!(r.get_status_zero(), false);
+    assert_eq!(r.get_status_negative(), false);
+    assert_eq!(r.get_status_overflow(), true)
   }
 }
