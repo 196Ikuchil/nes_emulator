@@ -155,8 +155,16 @@ lazy_static! {
     m.insert(0x16, Opecode{ name: Instruction::ASL, mode: Addressing::ZeropageX, cycle: 6});
     m.insert(0x0E, Opecode{ name: Instruction::ASL, mode: Addressing::Absolute, cycle: 6});
     m.insert(0x1E, Opecode{ name: Instruction::ASL, mode: Addressing::AbsoluteX, cycle: 7});
-    m.insert(0x24 ,Opecode{ name: Instruction::BIT, mode: Addressing::Zeropage, cycle: 3});
-    m.insert(0x2C ,Opecode{ name: Instruction::BIT, mode: Addressing::Absolute, cycle: 4});
+    m.insert(0x24, Opecode{ name: Instruction::BIT, mode: Addressing::Zeropage, cycle: 3});
+    m.insert(0x2C, Opecode{ name: Instruction::BIT, mode: Addressing::Absolute, cycle: 4});
+    m.insert(0xC9, Opecode{ name: Instruction::CMP, mode: Addressing::Immediate, cycle: 2});
+    m.insert(0xC5, Opecode{ name: Instruction::CMP, mode: Addressing::Zeropage, cycle: 3});
+    m.insert(0xD5, Opecode{ name: Instruction::CMP, mode: Addressing::ZeropageX, cycle: 4});
+    m.insert(0xCD, Opecode{ name: Instruction::CMP, mode: Addressing::Absolute, cycle: 4});
+    m.insert(0xDD, Opecode{ name: Instruction::CMP, mode: Addressing::AbsoluteX, cycle: 4});
+    m.insert(0xD9, Opecode{ name: Instruction::CMP, mode: Addressing::AbsoluteY, cycle: 4});
+    m.insert(0xC1, Opecode{ name: Instruction::CMP, mode: Addressing::IndirectX, cycle: 6});
+    m.insert(0xD1, Opecode{ name: Instruction::CMP, mode: Addressing::IndirectY, cycle: 5});
 
     m
   };
