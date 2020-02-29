@@ -153,6 +153,24 @@ pub fn and<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .set_A(c);
 }
 
+pub fn asl_acc<T: CpuRegister>(register: &mut T) {
+  let a = register.get_A() << 1;
+  register
+    .set_status_carry((a & 0x80) == 0x80)
+    .update_status_negative_by(a)
+    .update_status_zero_by(a)
+    .set_A(a);
+}
+
+pub fn asl<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let fetched = bus.read(operand) << 1;
+  register
+    .set_status_carry((fetched & 0x80) == 0x80)
+    .update_status_negative_by(fetched)
+    .update_status_zero_by(fetched);
+  bus.write(operand, fetched);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -390,5 +408,22 @@ mod test {
     b.memory[0x80] = 0x01;
     and(0x80, &mut r, &mut b);
     assert_eq!(r.get_A(), 0x01)
+  }
+
+  #[test]
+  fn test_asl_acc() {
+    let mut r = Register::new();
+    r.set_A(0x01);
+    asl_acc(&mut r);
+    assert_eq!(r.get_A(), 0x02)
+  }
+
+  #[test]
+  fn test_asl() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    b.memory[0x80] = 0x01;
+    asl(0x80, &mut r, &mut b);
+    assert_eq!(b.read(0x80), 0x02)
   }
 }

@@ -38,6 +38,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::ADC => adc(operand, register, cpu_bus),
     Instruction::AND if code.mode == Addressing::Immediate => and_imm(operand, register),
     Instruction::AND => and(operand, register, cpu_bus),
+    Instruction::ASL if code.mode == Addressing::Accumulator => asl_acc(register),
+    Instruction::ASL => asl(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -275,5 +277,28 @@ mod test {
     b.memory[0x22] = 0x11;
     run(&mut r, &mut b);
     assert_eq!(r.get_A(), 0x01)
+  }
+
+  #[test]
+  fn test_run_asl_acc() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0x01);
+    b.memory[0x80] = 0x0A;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0x02)
+  }
+
+  #[test]
+  fn test_run_asl_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x06;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x01;
+    run(&mut r, &mut b);
+    assert_eq!(b.memory[0x10], 0x02)
   }
 }
