@@ -13,6 +13,7 @@ pub fn fetch<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
 
 pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T, bus: &mut U) -> Word {
   match code.mode {
+    Addressing::Implied => 0x0000,
     Addressing::Immediate => fetch(register, bus) as Word,
     Addressing::Zeropage => fetch(register, bus) as Addr,
     Addressing::ZeropageX => fetch_zeropage_x(register, bus) as Addr,

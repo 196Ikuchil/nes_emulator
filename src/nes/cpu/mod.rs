@@ -28,6 +28,7 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::STA => sta(operand, register, cpu_bus),
     Instruction::STX => stx(operand, register, cpu_bus),
     Instruction::STY => sty(operand, register, cpu_bus),
+    Instruction::TAX => tax(register),
     _ => panic!("Invalid code"),
   }
 }
@@ -174,5 +175,16 @@ mod test {
     b.memory[0x81] = 0x11;
     run(&mut r, &mut b);
     assert_eq!(b.read(0x12), 0xFF)
+  }
+
+  #[test]
+  fn test_run_tax() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0xFF);
+    b.memory[0x80] = 0xAA;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_X(),0xFF)
   }
 }

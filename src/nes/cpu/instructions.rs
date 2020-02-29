@@ -61,6 +61,10 @@ pub fn sty<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut
   bus.write(operand, register.get_Y())
 }
 
+pub fn tax<T: CpuRegister>(register: &mut T) {
+  register.set_X(register.get_A());
+}
+
 
 #[cfg(test)]
 mod test {
@@ -168,5 +172,13 @@ mod test {
     r.set_Y(0xFF);
     sty(0x11, &mut r, &mut b);
     assert_eq!(b.read(0x11), 0xFF)
+  }
+
+  #[test]
+  fn test_tax() {
+    let mut r = Register::new();
+    r.set_A(0xFF);
+    tax(&mut r);
+    assert_eq!(r.get_X(),0xFF)
   }
 }
