@@ -16,6 +16,7 @@ pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T
     Addressing::Immediate => fetch(register, bus) as Word,
     Addressing::Zeropage => fetch(register, bus) as Addr,
     Addressing::ZeropageX => fetch_zeropage_x(register, bus) as Addr,
+    Addressing::ZeropageY => fetch_zeropage_y(register, bus) as Addr,
     Addressing::Absolute => fetch_absolute(register, bus),
     Addressing::AbsoluteX => fetch_absolute_x(register, bus),
     Addressing::AbsoluteY => fetch_absolute_y(register, bus),
@@ -28,6 +29,11 @@ pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T
 fn fetch_zeropage_x<T: CpuRegister,U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
   let addr = fetch(register, bus);
   addr + register.get_X()
+}
+
+fn fetch_zeropage_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
+  let addr = fetch(register, bus);
+  addr + register.get_Y()
 }
 
 fn fetch_absolute<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
@@ -108,6 +114,17 @@ mod test {
     b.memory[0x80] = 0x90;
     let addr = fetch_zeropage_x(&mut r, &mut b);
     assert_eq!(addr, 0x91);
+  }
+
+  #[test]
+  fn test_fetch_zeropage_y() {
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    r.set_PC(0x80);
+    r.set_Y(0x01);
+    b.memory[0x80] = 0x90;
+    let addr = fetch_zeropage_y(&mut r, &mut b);
+    assert_eq!(addr,0x91)
   }
 
   #[test]
