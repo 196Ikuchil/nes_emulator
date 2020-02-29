@@ -32,6 +32,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::TAY => tay(register),
     Instruction::TSX => tsx(register),
     Instruction::TXA => txa(register),
+    Instruction::TXS => txs(register),
+    Instruction::TYA => tya(register),
     _ => panic!("Invalid code"),
   }
 }
@@ -220,6 +222,28 @@ mod test {
     r.set_PC(0x80);
     r.set_X(0xFF);
     b.memory[0x80] = 0x8A;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_txs() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_X(0xFF);
+    b.memory[0x80] = 0x9A;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_S(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_tya() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_Y(0xFF);
+    b.memory[0x80] = 0x98;
     run(&mut r, &mut b);
     assert_eq!(r.get_A(), 0xFF)
   }

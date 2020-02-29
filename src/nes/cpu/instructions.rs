@@ -93,6 +93,22 @@ pub fn txa<T: CpuRegister>(register: &mut T) {
     .update_status_zero_by(v);
 }
 
+pub fn txs<T: CpuRegister>(register: &mut T) {
+  let v = register.get_X();
+  register
+    .set_S(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
+}
+
+pub fn tya<T: CpuRegister>(register: &mut T) {
+  let v = register.get_Y();
+  register
+    .set_A(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -231,6 +247,22 @@ mod test {
     let mut r = Register::new();
     r.set_X(0xFF);
     txa(&mut r);
+    assert_eq!(r.get_A(),0xFF)
+  }
+
+  #[test]
+  fn test_txs() {
+    let mut r = Register::new();
+    r.set_X(0xFF);
+    txs(&mut r);
+    assert_eq!(r.get_S(),0xFF)
+  }
+
+  #[test]
+  fn test_tya() {
+    let mut r = Register::new();
+    r.set_Y(0xFF);
+    tya(&mut r);
     assert_eq!(r.get_A(),0xFF)
   }
 }
