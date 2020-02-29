@@ -96,7 +96,13 @@ lazy_static! {
   pub static ref OPEMAP: HashMap<u8, Opecode> = {
     let mut m = HashMap::new();
     m.insert(0xA9, Opecode{ name: Instruction::LDA, mode: Addressing::Immediate, cycle: 2});
-
+    m.insert(0xA5, Opecode{ name: Instruction::LDA, mode: Addressing::Zeropage, cycle: 3});
+    m.insert(0xB5, Opecode{ name: Instruction::LDA, mode: Addressing::ZeropageX, cycle: 4});
+    m.insert(0xAD, Opecode{ name: Instruction::LDA, mode: Addressing::Absolute, cycle: 4});
+    m.insert(0xBD, Opecode{ name: Instruction::LDA, mode: Addressing::AbsoluteX, cycle: 4});
+    m.insert(0xB9, Opecode{ name: Instruction::LDA, mode: Addressing::AbsoluteY, cycle: 4});
+    m.insert(0xA1, Opecode{ name: Instruction::LDA, mode: Addressing::IndirectX, cycle: 6});
+    m.insert(0xB1, Opecode{ name: Instruction::LDA, mode: Addressing::IndirectY, cycle: 5});
     m
   };
 }
