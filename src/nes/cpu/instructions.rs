@@ -49,6 +49,10 @@ pub fn ldy<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut
     .update_status_zero_by(v);
 }
 
+pub fn sta<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut U) {
+  bus.write(operand, register.get_A())
+}
+
 
 #[cfg(test)]
 mod test {
@@ -129,5 +133,14 @@ mod test {
     b.memory[0xA5] = 0xFF;
     ldy(0xA5, &mut r, &mut b);
     assert_eq!(r.get_Y(),0xFF)
+  }
+
+  #[test]
+  fn test_sta() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0xFF);
+    sta(0x11, &mut r, &mut b);
+    assert_eq!(b.read(0x11), 0xFF)
   }
 }

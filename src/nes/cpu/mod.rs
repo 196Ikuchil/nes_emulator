@@ -25,6 +25,7 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::LDX => ldx(operand, register, cpu_bus),
     Instruction::LDY if code.mode == Addressing::Immediate => ldy_imm(operand, register),
     Instruction::LDY => ldy(operand, register, cpu_bus),
+    Instruction::STA => sta(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -132,5 +133,17 @@ mod test {
     b.memory[0x12] = 0xFF;
     run(&mut r, &mut b);
     assert_eq!(r.get_Y(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_sta_zpg_x(){
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    r.set_PC(0x80);
+    r.set_A(0xFF);
+    b.memory[0x80] = 0x95;
+    b.memory[0x81] = 0x11;
+    run(&mut r, &mut b);
+    assert_eq!(b.read(0x11), 0xFF)
   }
 }
