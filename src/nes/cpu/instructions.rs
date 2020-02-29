@@ -62,9 +62,36 @@ pub fn sty<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut
 }
 
 pub fn tax<T: CpuRegister>(register: &mut T) {
-  register.set_X(register.get_A());
+  let v = register.get_A();
+  register
+    .set_X(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
 }
 
+pub fn tay<T: CpuRegister>(register: &mut T) {
+  let v = register.get_A();
+  register
+    .set_Y(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
+}
+
+pub fn tsx<T: CpuRegister>(register: &mut T) {
+  let v = register.get_S();
+  register
+    .set_X(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
+}
+
+pub fn txa<T: CpuRegister>(register: &mut T) {
+  let v = register.get_X();
+  register
+    .set_A(v)
+    .update_status_negative_by(v)
+    .update_status_zero_by(v);
+}
 
 #[cfg(test)]
 mod test {
@@ -180,5 +207,30 @@ mod test {
     r.set_A(0xFF);
     tax(&mut r);
     assert_eq!(r.get_X(),0xFF)
+  }
+
+  #[test]
+  fn test_tay() {
+    let mut r = Register::new();
+    r.set_A(0xFF);
+    tay(&mut r);
+    assert_eq!(r.get_Y(),0xFF)
+  }
+
+  #[test]
+  fn test_tsx() {
+    let mut r = Register::new();
+    r.set_S(0xFF);
+    tsx(&mut r);
+    assert_eq!(r.get_X(),0xFF)
+  }
+
+
+  #[test]
+  fn test_txa() {
+    let mut r = Register::new();
+    r.set_X(0xFF);
+    txa(&mut r);
+    assert_eq!(r.get_A(),0xFF)
   }
 }

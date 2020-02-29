@@ -29,6 +29,9 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::STX => stx(operand, register, cpu_bus),
     Instruction::STY => sty(operand, register, cpu_bus),
     Instruction::TAX => tax(register),
+    Instruction::TAY => tay(register),
+    Instruction::TSX => tsx(register),
+    Instruction::TXA => txa(register),
     _ => panic!("Invalid code"),
   }
 }
@@ -186,5 +189,38 @@ mod test {
     b.memory[0x80] = 0xAA;
     run(&mut r, &mut b);
     assert_eq!(r.get_X(),0xFF)
+  }
+
+  #[test]
+  fn test_run_tay() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0xFF);
+    b.memory[0x80] = 0xA8;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_Y(),0xFF)
+  }
+
+  #[test]
+  fn test_run_tsx() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_S(0xFF);
+    b.memory[0x80] = 0xBA;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_X(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_txa() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_X(0xFF);
+    b.memory[0x80] = 0x8A;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0xFF)
   }
 }
