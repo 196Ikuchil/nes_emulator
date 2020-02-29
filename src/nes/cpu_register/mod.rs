@@ -1,3 +1,4 @@
+use super::helper::*;
 use super::types::{Data, Addr, Word};
 
 struct Status {
