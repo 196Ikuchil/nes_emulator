@@ -1,6 +1,7 @@
 use super::super::types::{Data, Addr, Word};
 use super::CpuRegister;
 use super::CpuBus;
+use super::super::helper::*;
 
 use std::fmt::Debug;
 
@@ -107,6 +108,33 @@ pub fn tya<T: CpuRegister>(register: &mut T) {
     .set_A(v)
     .update_status_negative_by(v)
     .update_status_zero_by(v);
+}
+
+pub fn adc_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  let a = register.get_A();
+  let computed = operand + a as u16 +  bool2u8(register.get_status_carry()) as u16;
+  let result = (computed & 0xff) as u8;
+
+  register
+    .set_status_overflow(((a ^ result) & ((operand as u8) ^ result) & 0x80) == 0x80)
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed > 0x00ff)
+    .set_A(result);
+}
+
+pub fn adc<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut U) {
+  let a = register.get_A();
+  let fetched = bus.read(operand);
+  let computed = fetched as u16 + a as u16 + bool2u8(register.get_status_carry()) as u16;
+  let result = (computed & 0xff) as u8;
+
+  register
+    .set_status_overflow(((a ^ result) & (fetched ^ result) & 0x80) == 0x80)
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed > 0x00ff)
+    .set_A(result);
 }
 
 #[cfg(test)]
@@ -265,4 +293,70 @@ mod test {
     tya(&mut r);
     assert_eq!(r.get_A(),0xFF)
   }
+
+  #[test]
+  fn test_adc_imm() {
+    let mut r = Register::new();
+    r.set_A(0x01);
+    adc_imm(0x03, &mut r);
+    assert_eq!(r.get_A(),0x04);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x01);
+    r.set_status_carry(true);
+    adc_imm(0x03, &mut r);
+    assert_eq!(r.get_A(),0x05);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x01);
+    adc_imm(0x7F, &mut r);
+    assert_eq!(r.get_A(),0x80);
+    assert_eq!(r.get_status_overflow(), true);
+
+    // Unconfirmed?
+    r.set_A(0x01);
+    adc_imm(0x80, &mut r);
+    assert_eq!(r.get_status_overflow(), false);
+    // Unconfirmed?
+    r.set_A(0x80);
+    adc_imm(0x01, &mut r);
+    assert_eq!(r.get_status_overflow(), false);
+  }
+
+  #[test]
+  fn test_adc() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0x01);
+    b.memory[0x11] = 0x03;
+    adc(0x11, &mut r, &mut b);
+    assert_eq!(r.get_A(),0x04);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x01);
+    r.set_status_carry(true);
+    b.memory[0x11] = 0x03;
+    adc(0x11, &mut r, &mut b);
+    assert_eq!(r.get_A(),0x05);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x01);
+    b.memory[0x11] = 0x7F;
+    adc(0x11, &mut r, &mut b);
+    assert_eq!(r.get_A(),0x80);
+    assert_eq!(r.get_status_overflow(), true);
+
+    // Unconfirmed?
+    r.set_A(0x01);
+    b.memory[0x11] = 0x80;
+    adc(0x11, &mut r, &mut b);
+    assert_eq!(r.get_status_overflow(), false);
+    // Unconfirmed?
+    r.set_A(0x80);
+    b.memory[0x11] = 0x01;
+    adc(0x11, &mut r, &mut b);
+    assert_eq!(r.get_status_overflow(), false)
+  }
+
+
 }

@@ -95,6 +95,7 @@ pub enum Addressing {
 lazy_static! {
   pub static ref OPEMAP: HashMap<u8, Opecode> = {
     let mut m = HashMap::new();
+    // transport
     m.insert(0xA9, Opecode{ name: Instruction::LDA, mode: Addressing::Immediate, cycle: 2});
     m.insert(0xA5, Opecode{ name: Instruction::LDA, mode: Addressing::Zeropage, cycle: 3});
     m.insert(0xB5, Opecode{ name: Instruction::LDA, mode: Addressing::ZeropageX, cycle: 4});
@@ -132,6 +133,17 @@ lazy_static! {
     m.insert(0x8A, Opecode{ name: Instruction::TXA, mode: Addressing::Implied, cycle: 2});
     m.insert(0x9A, Opecode{ name: Instruction::TXS, mode: Addressing::Implied, cycle: 2});
     m.insert(0x98, Opecode{ name: Instruction::TYA, mode: Addressing::Implied, cycle: 2});
+    // calculate
+    m.insert(0x69, Opecode{ name: Instruction::ADC, mode: Addressing::Immediate, cycle: 2});
+    m.insert(0x65, Opecode{ name: Instruction::ADC, mode: Addressing::Zeropage, cycle: 3});
+    m.insert(0x75, Opecode{ name: Instruction::ADC, mode: Addressing::ZeropageX, cycle: 4});
+    m.insert(0x6D, Opecode{ name: Instruction::ADC, mode: Addressing::Absolute, cycle: 4});
+    m.insert(0x7D, Opecode{ name: Instruction::ADC, mode: Addressing::AbsoluteX, cycle: 4});
+    m.insert(0x79, Opecode{ name: Instruction::ADC, mode: Addressing::AbsoluteY, cycle: 4});
+    m.insert(0x61, Opecode{ name: Instruction::ADC, mode: Addressing::IndirectX, cycle: 6});
+    m.insert(0x71, Opecode{ name: Instruction::ADC, mode: Addressing::IndirectY, cycle: 5});
+
+
     m
   };
 }

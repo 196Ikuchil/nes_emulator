@@ -34,6 +34,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::TXA => txa(register),
     Instruction::TXS => txs(register),
     Instruction::TYA => tya(register),
+    Instruction::ADC if code.mode == Addressing::Immediate => adc_imm(operand, register),
+    Instruction::ADC => adc(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
