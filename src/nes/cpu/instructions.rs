@@ -53,6 +53,10 @@ pub fn sta<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut
   bus.write(operand, register.get_A())
 }
 
+pub fn stx<T: CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut U) {
+  bus.write(operand, register.get_X())
+}
+
 
 #[cfg(test)]
 mod test {
@@ -141,6 +145,15 @@ mod test {
     let mut b = MockBus::new();
     r.set_A(0xFF);
     sta(0x11, &mut r, &mut b);
+    assert_eq!(b.read(0x11), 0xFF)
+  }
+
+  #[test]
+  fn test_stx() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_X(0xFF);
+    stx(0x11, &mut r, &mut b);
     assert_eq!(b.read(0x11), 0xFF)
   }
 }
