@@ -196,6 +196,38 @@ pub fn cmp<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .set_status_carry(computed >= 0);
 }
 
+pub fn cpx_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  let computed = register.get_X() as i16 - operand as i16;
+  register
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed >= 0);
+}
+
+pub fn cpx<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let computed = register.get_X() as i16 - bus.read(operand) as i16;
+  register
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed >= 0);
+}
+
+pub fn cpy_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  let computed = register.get_Y() as i16 - operand as i16;
+  register
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed >= 0);
+}
+
+pub fn cpy<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let computed = register.get_Y() as i16 - bus.read(operand) as i16;
+  register
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed >= 0);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -480,6 +512,47 @@ mod test {
     r.set_A(0x40);
     b.memory[0x80] = 0x50;
     cmp(0x80, &mut r, &mut b);
+    assert_eq!(r.get_status_negative(), true);
+    assert_eq!(r.get_status_carry(), false)
+  }
+
+  #[test]
+  fn test_cpx_imm() {
+    let mut r = Register::new();
+    r.set_X(0x40);
+    cpx_imm(0x50, &mut r);
+    assert_eq!(r.get_status_negative(), true);
+    assert_eq!(r.get_status_carry(), false)
+  }
+
+  #[test]
+  fn test_cpx() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_X(0x40);
+    b.memory[0x80] = 0x50;
+    cpx(0x80, &mut r, &mut b);
+    assert_eq!(r.get_status_negative(), true);
+    assert_eq!(r.get_status_carry(), false)
+  }
+
+
+  #[test]
+  fn test_cpy_imm() {
+    let mut r = Register::new();
+    r.set_Y(0x40);
+    cpx_imm(0x50, &mut r);
+    assert_eq!(r.get_status_negative(), true);
+    assert_eq!(r.get_status_carry(), false)
+  }
+
+  #[test]
+  fn test_cpy() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_Y(0x40);
+    b.memory[0x80] = 0x50;
+    cpx(0x80, &mut r, &mut b);
     assert_eq!(r.get_status_negative(), true);
     assert_eq!(r.get_status_carry(), false)
   }

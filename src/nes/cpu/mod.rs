@@ -43,6 +43,10 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::BIT => bit(operand, register, cpu_bus),
     Instruction::CMP if code.mode == Addressing::Immediate => cmp_imm(operand, register),
     Instruction::CMP => cmp(operand, register, cpu_bus),
+    Instruction::CPX if code.mode == Addressing::Immediate => cpx_imm(operand, register),
+    Instruction::CPX => cpx(operand, register, cpu_bus),
+    Instruction::CPY if code.mode == Addressing::Immediate => cpy_imm(operand, register),
+    Instruction::CPY => cpy(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -338,6 +342,56 @@ mod test {
     let mut b = MockBus::new();
     r.set_PC(0x80);
     r.set_A(0x40);
+    b.memory[0x80] = 0xC5;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x50;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_status_negative(), true)
+  }
+
+  #[test]
+  fn test_run_cpx_imm() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_X(0x40);
+    b.memory[0x80] = 0xC9;
+    b.memory[0x81] = 0x50;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_status_negative(), true)
+  }
+
+  #[test]
+  fn test_run_cpx_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_X(0x40);
+    b.memory[0x80] = 0xC5;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x50;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_status_negative(), true)
+  }
+
+  #[test]
+  fn test_run_cpy_imm() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_Y(0x40);
+    b.memory[0x80] = 0xC9;
+    b.memory[0x81] = 0x50;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_status_negative(), true)
+  }
+
+  #[test]
+  fn test_run_cpy_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_Y(0x40);
     b.memory[0x80] = 0xC5;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x50;
