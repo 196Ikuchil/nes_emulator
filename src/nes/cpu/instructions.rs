@@ -390,6 +390,19 @@ pub fn sbc<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .set_A(computed as Data);
 }
 
+fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
+  let addr = register.get_S() as Addr;
+  bus.write(0x0100 | addr, data);
+  register.dec_S();
+}
+
+fn pop<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
+  register.inc_S();
+  let stack = register.get_S() as Addr;
+  bus.read(0x0100 | stack)
+}
+
+
 fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
   ((v << 1) as Data | if register.get_status_carry() { 0x01 } else { 0x00 }) as Data
 }
