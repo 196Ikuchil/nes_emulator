@@ -292,6 +292,26 @@ pub fn iny<T: CpuRegister>(register: &mut T) {
     .set_Y(y as Data);
 }
 
+pub fn lsr_acc<T: CpuRegister>(register: &mut T) {
+  let a = register.get_A();
+  let shifted = (a >> 1) as u8;
+  register
+    .set_status_carry((a & 0x01) == 0x01)
+    .update_status_negative_by(shifted)
+    .update_status_zero_by(shifted)
+    .set_A(shifted);
+}
+
+pub fn lsr<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let fetched = bus.read(operand);
+  let shifted = (fetched >> 1) as u8;
+  register
+    .set_status_carry((fetched & 0x01) == 0x01)
+    .update_status_negative_by(shifted)
+    .update_status_zero_by(shifted);
+  bus.write(operand, shifted)
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -687,5 +707,34 @@ mod test {
     r.set_Y(0x02);
     iny(&mut r);
     assert_eq!(r.get_Y(), 0x03)
+  }
+
+  #[test]
+  fn test_lsr_acc() {
+    let mut r = Register::new();
+    r.set_A(0x01);
+    lsr_acc(&mut r);
+    assert_eq!(r.get_A(), 0x00);
+    assert_eq!(r.get_status_carry(), true);
+
+    r.set_A(0x02);
+    lsr_acc(&mut r);
+    assert_eq!(r.get_A(),0x01);
+    assert_eq!(r.get_status_carry(), false)
+  }
+
+  #[test]
+  fn test_lsr() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    b.memory[0x80] = 0x01;
+    lsr(0x80, &mut r, &mut b);
+    assert_eq!(b.read(0x80), 0x00);
+    assert_eq!(r.get_status_carry(), true);
+
+    b.memory[0x80] = 0x02;
+    lsr(0x80, &mut r, &mut b);
+    assert_eq!(b.read(0x80), 0x01);
+    assert_eq!(r.get_status_carry(), false);
   }
 }
