@@ -268,6 +268,30 @@ pub fn eor<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .set_A(computed);
 }
 
+pub fn inc<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let computed = bus.read(operand) as i8 +1;
+  register
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data);
+  bus.write(operand, computed as Data)
+}
+
+pub fn inx<T: CpuRegister>(register: &mut T) {
+  let x = register.get_X() as i8 +1;
+  register
+    .update_status_negative_by(x as Data)
+    .update_status_zero_by(x as Data)
+    .set_X(x as Data);
+}
+
+pub fn iny<T: CpuRegister>(register: &mut T) {
+  let y = register.get_Y() as i8 +1;
+  register
+    .update_status_negative_by(y as Data)
+    .update_status_zero_by(y as Data)
+    .set_Y(y as Data);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -638,5 +662,30 @@ mod test {
     b.memory[0x80] = 0xF0;
     eor(0x80, &mut r, &mut b);
     assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_inc() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    b.memory[0x80] = 0x02;
+    inc(0x80, &mut r, &mut b);
+    assert_eq!(b.memory[0x80], 0x03)
+  }
+
+  #[test]
+  fn test_inx() {
+    let mut r = Register::new();
+    r.set_X(0x02);
+    inx(&mut r);
+    assert_eq!(r.get_X(), 0x03)
+  }
+
+  #[test]
+  fn test_iny() {
+    let mut r = Register::new();
+    r.set_Y(0x02);
+    iny(&mut r);
+    assert_eq!(r.get_Y(), 0x03)
   }
 }

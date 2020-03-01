@@ -52,6 +52,9 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::DEY => dey(register),
     Instruction::EOR if code.mode == Addressing::Immediate => eor_imm(operand, register),
     Instruction::EOR => eor(operand, register, cpu_bus),
+    Instruction::INC => inc(operand, register, cpu_bus),
+    Instruction::INX => inx(register),
+    Instruction::INY => iny(register),
     _ => panic!("Invalid code"),
   }
 }
@@ -461,5 +464,39 @@ mod test {
     b.memory[0x10] = 0xF0;
     run(&mut r, &mut b);
     assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_inc_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xE6;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x02;
+    run(&mut r, &mut b);
+    assert_eq!(b.memory[0x10], 0x03)
+  }
+
+  #[test]
+  fn test_run_inx() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_X(0x02);
+    b.memory[0x80] = 0xE8;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_X(), 0x03)
+  }
+
+  #[test]
+  fn test_run_iny() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_Y(0x02);
+    b.memory[0x80] = 0xC8;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_Y(), 0x03)
   }
 }

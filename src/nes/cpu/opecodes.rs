@@ -185,7 +185,12 @@ lazy_static! {
     m.insert(0x59, Opecode{ name: Instruction::EOR, mode: Addressing::AbsoluteY , cycle: 4});
     m.insert(0x41, Opecode{ name: Instruction::EOR, mode: Addressing::IndirectX , cycle: 6});
     m.insert(0x51, Opecode{ name: Instruction::EOR, mode: Addressing::IndirectY , cycle: 5});
-
+    m.insert(0xE6, Opecode{ name: Instruction::INC, mode: Addressing::Zeropage , cycle: 5});
+    m.insert(0xF6, Opecode{ name: Instruction::INC, mode: Addressing::ZeropageX , cycle: 6});
+    m.insert(0xEE, Opecode{ name: Instruction::INC, mode: Addressing::Absolute , cycle: 6});
+    m.insert(0xFE, Opecode{ name: Instruction::INC, mode: Addressing::AbsoluteX , cycle: 7});
+    m.insert(0xE8, Opecode{ name: Instruction::INX, mode: Addressing::Implied , cycle: 2});
+    m.insert(0xC8, Opecode{ name: Instruction::INY, mode: Addressing::Implied , cycle: 2});
     m
 
   };
