@@ -74,6 +74,7 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::JMP => jmp(operand, register),
     Instruction::JSR => jsr(operand, register, cpu_bus),
     Instruction::RTS => rts(register, cpu_bus),
+    Instruction::RTI => rti(register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -768,5 +769,24 @@ mod test {
     run(&mut r, &mut b);
     run(&mut r, &mut b);
     assert_eq!(r.get_PC(), 0x0083);
+  }
+
+  #[test]
+  fn test_run_rti() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_Status(0xFF);
+    r.set_PC(0x80);
+    r.set_S(0x30);
+    b.memory[0x80] = 0x20;
+    b.memory[0x81] = 0x11;
+    b.memory[0x82] = 0x22;
+    b.memory[0x2211] = 0x08;
+    b.memory[0x2212] = 0x40;
+    run(&mut r, &mut b);
+    run(&mut r, &mut b);
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x83);
+    assert_eq!(r.get_Status(),0xFF);
   }
 }

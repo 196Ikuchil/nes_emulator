@@ -428,6 +428,12 @@ pub fn rts<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   register.increment_PC();
 }
 
+pub fn rti<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  pop_status(register, bus);
+  pop_pc(register, bus);
+  register.increment_PC();
+}
+
 
 
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
@@ -440,12 +446,18 @@ fn pop<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
   register.inc_S();
   let stack = register.get_S() as Addr;
   bus.read(0x0100 | stack)
+
 }
 
 fn pop_pc<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   let lower = pop(register, bus) as u16;
   let upper = pop(register, bus) as u16;
   register.set_PC(upper << 8 | lower);
+}
+
+fn pop_status<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let p = pop(register, bus);
+  register.set_Status(p);
 }
 
 fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
@@ -1069,5 +1081,19 @@ mod test {
     jsr(0x10, &mut r, &mut b);
     rts(&mut r, &mut b);
     assert_eq!(r.get_PC(), 0x0204);
+  }
+
+  #[test]
+  fn test_rti(){
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_S(0x30);
+    r.set_Status(0xFF);
+    r.set_PC(0x0204);
+    jsr(0x10, &mut r, &mut b);
+    php(&mut r, &mut b);
+    rti(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x0204);
+    assert_eq!(r.get_Status(),0xFF);
   }
 }
