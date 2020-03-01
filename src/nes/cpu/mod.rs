@@ -59,6 +59,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::LSR => lsr(operand, register, cpu_bus),
     Instruction::ORA if code.mode == Addressing::Immediate => ora_imm(operand, register),
     Instruction::ORA => ora(operand, register, cpu_bus),
+    Instruction::ROL if code.mode == Addressing::Accumulator => rol_acc(register),
+    Instruction::ROL => rol(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -552,4 +554,26 @@ mod test {
     assert_eq!(r.get_A(), 0xFF)
   }
 
+  #[test]
+  fn test_run_rol_acc() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0x01);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x2A;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0x02);
+  }
+
+  #[test]
+  fn test_run_rol_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x26;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x01;
+    run(&mut r, &mut b);
+    assert_eq!(b.memory[0x10], 0x02)
+  }
 }

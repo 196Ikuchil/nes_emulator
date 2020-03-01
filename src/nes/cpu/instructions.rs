@@ -327,6 +327,36 @@ pub fn ora<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .set_A(or);
 }
 
+pub fn rol_acc<T: CpuRegister>(register: &mut T) {
+  let a = register.get_A();
+  let computed = rotate_to_left(register, a);
+  register
+    .set_status_carry((a & 0x80) == 0x80)
+    .update_status_negative_by(computed)
+    .update_status_zero_by(computed)
+    .set_A(computed);
+}
+
+pub fn rol<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let fetched = bus.read(operand);
+  let computed = rotate_to_left(register, fetched);
+  register
+    .set_status_carry((fetched & 0x80) == 0x80)
+    .update_status_negative_by(computed)
+    .update_status_zero_by(computed);
+  bus.write(operand, computed);
+}
+
+
+
+fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
+  ((v << 1) as Data | if register.get_status_carry() { 0x01 } else { 0x00 }) as Data
+}
+
+fn rotate_to_right<T: CpuRegister>(register: &mut T, v: Data) -> Data {
+  ((v >> 1) as Data | if register.get_status_carry() { 0x80 } else { 0x00 }) as Data
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -770,5 +800,32 @@ mod test {
     b.memory[0x80] = 0xF;
     ora(0x80, &mut r, &mut b);
     assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_rol_acc() {
+    let mut r = Register::new();
+    r.set_A(0x01);
+    rol_acc(&mut r);
+    assert_eq!(r.get_A(), 0x02);
+
+    r.set_A(0x01);
+    r.set_status_carry(true);
+    rol_acc(&mut r);
+    assert_eq!(r.get_A(), 0x03);
+  }
+
+  #[test]
+  fn test_rol() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    b.memory[0x80] = 0x01;
+    rol(0x80, &mut r, &mut b);
+    assert_eq!(b.memory[0x80], 0x02);
+
+    b.memory[0x80] = 0x01;
+    r.set_status_carry(true);
+    rol(0x80, &mut r, &mut b);
+    assert_eq!(b.memory[0x80], 0x03);
   }
 }
