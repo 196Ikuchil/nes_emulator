@@ -312,6 +312,21 @@ pub fn lsr<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
   bus.write(operand, shifted)
 }
 
+pub fn ora_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  let or = register.get_A() | operand as Data;
+  register
+    .update_status_negative_by(or)
+    .update_status_zero_by(or)
+    .set_A(or);
+}
+pub fn ora<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let or = register.get_A() | bus.read(operand);
+  register
+    .update_status_negative_by(or)
+    .update_status_zero_by(or)
+    .set_A(or);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -736,5 +751,24 @@ mod test {
     lsr(0x80, &mut r, &mut b);
     assert_eq!(b.read(0x80), 0x01);
     assert_eq!(r.get_status_carry(), false);
+  }
+
+
+  #[test]
+  fn test_ora_imm() {
+    let mut r = Register::new();
+    r.set_A(0xF0);
+    ora_imm(0x0F, &mut r);
+    assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_ora() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0xF0);
+    b.memory[0x80] = 0xF;
+    ora(0x80, &mut r, &mut b);
+    assert_eq!(r.get_A(), 0xFF)
   }
 }
