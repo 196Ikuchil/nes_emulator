@@ -47,6 +47,9 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::CPX => cpx(operand, register, cpu_bus),
     Instruction::CPY if code.mode == Addressing::Immediate => cpy_imm(operand, register),
     Instruction::CPY => cpy(operand, register, cpu_bus),
+    Instruction::DEC => dec(operand, register, cpu_bus),
+    Instruction::DEX => dex(register),
+    Instruction::DEY => dey(register),
     _ => panic!("Invalid code"),
   }
 }
@@ -397,5 +400,39 @@ mod test {
     b.memory[0x10] = 0x50;
     run(&mut r, &mut b);
     assert_eq!(r.get_status_negative(), true)
+  }
+
+  #[test]
+  fn test_run_dec_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xC6;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x02;
+    run(&mut r, &mut b);
+    assert_eq!(b.memory[0x10], 0x01)
+  }
+
+  #[test]
+  fn test_run_dex() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_X(0x02);
+    b.memory[0x80] = 0xCA;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_X(), 0x01)
+  }
+
+  #[test]
+  fn test_run_dey() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_Y(0x02);
+    b.memory[0x80] = 0x88;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_Y(), 0x01)
   }
 }

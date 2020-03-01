@@ -228,6 +228,30 @@ pub fn cpy<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .set_status_carry(computed >= 0);
 }
 
+pub fn dec<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let computed = bus.read(operand) as i8 -1;
+  register
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data);
+  bus.write(operand, computed as Data)
+}
+
+pub fn dex<T: CpuRegister>(register: &mut T) {
+  let x = register.get_X() as i8 -1;
+  register
+    .update_status_negative_by(x as Data)
+    .update_status_zero_by(x as Data)
+    .set_X(x as Data);
+}
+
+pub fn dey<T: CpuRegister>(register: &mut T) {
+  let y = register.get_Y() as i8 -1;
+  register
+    .update_status_negative_by(y as Data)
+    .update_status_zero_by(y as Data)
+    .set_Y(y as Data);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -555,5 +579,30 @@ mod test {
     cpx(0x80, &mut r, &mut b);
     assert_eq!(r.get_status_negative(), true);
     assert_eq!(r.get_status_carry(), false)
+  }
+
+  #[test]
+  fn test_dec() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    b.memory[0x80] = 0x02;
+    dec(0x80, &mut r, &mut b);
+    assert_eq!(b.memory[0x80], 0x01)
+  }
+
+  #[test]
+  fn test_dex() {
+    let mut r = Register::new();
+    r.set_X(0x02);
+    dex(&mut r);
+    assert_eq!(r.get_X(), 0x01)
+  }
+
+  #[test]
+  fn test_dey() {
+    let mut r = Register::new();
+    r.set_Y(0x02);
+    dey(&mut r);
+    assert_eq!(r.get_Y(), 0x01)
   }
 }
