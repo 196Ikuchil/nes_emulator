@@ -227,6 +227,9 @@ lazy_static! {
     m.insert(0x08, Opecode{ name: Instruction::PHP, mode: Addressing::Implied, cycle: 3});
     m.insert(0x68, Opecode{ name: Instruction::PLA, mode: Addressing::Implied, cycle: 4});
     m.insert(0x28, Opecode{ name: Instruction::PLP, mode: Addressing::Implied, cycle: 4});
+    // jump
+    m.insert(0x4C, Opecode{ name: Instruction::JMP, mode: Addressing::Absolute, cycle: 3});
+    m.insert(0x6C, Opecode{ name: Instruction::JMP, mode: Addressing::Indirect, cycle: 5});
     m
   };
 }

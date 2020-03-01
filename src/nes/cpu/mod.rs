@@ -70,6 +70,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::PHP => php(register, cpu_bus),
     Instruction::PLA => pla(register, cpu_bus),
     Instruction::PLP => plp(register, cpu_bus),
+
+    Instruction::JMP => jmp(operand, register),
     _ => panic!("Invalid code"),
   }
 }
@@ -722,5 +724,17 @@ mod test {
     b.memory[0x0111] = 0xFF;
     run(&mut r, &mut b);
     assert_eq!(r.get_Status(), 0xFF);
+  }
+
+  #[test]
+  fn test_run_jmp_abs () {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x4C;
+    b.memory[0x81] = 0x01;
+    b.memory[0x82] = 0x02;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x0201);
   }
 }

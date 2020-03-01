@@ -412,6 +412,10 @@ pub fn plp<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   register.set_Status(v);
 }
 
+pub fn jmp<T:CpuRegister>(operand: Addr, register: &mut T) {
+  register.set_PC(operand);
+}
+
 
 
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
@@ -1017,6 +1021,13 @@ mod test {
     b.memory[0x0111] = 0xFF;
     plp(&mut r, &mut b);
     assert_eq!(r.get_Status(), 0xFF);
+  }
+
+  #[test]
+  fn test_jmp() {
+    let mut r = Register::new();
+    jmp(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
   }
 
 }

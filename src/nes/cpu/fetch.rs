@@ -39,8 +39,8 @@ fn fetch_zeropage_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) ->
 }
 
 fn fetch_absolute<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
-  let top = fetch(register, bus) as Word;
-  (fetch(register,bus) as Word) << 8 | top
+  let lower = fetch(register, bus) as Word;
+  (fetch(register,bus) as Word) << 8 | lower
 }
 
 fn fetch_absolute_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
