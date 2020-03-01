@@ -65,6 +65,9 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::ROR => ror(operand, register, cpu_bus),
     Instruction::SBC if code.mode == Addressing::Immediate => sbc_imm(operand, register),
     Instruction::SBC => sbc(operand, register, cpu_bus),
+
+    Instruction::PHA => pha(register, cpu_bus),
+    Instruction::PHP => php(register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -669,5 +672,29 @@ mod test {
     b.memory[0x10] = 0x80;
     run(&mut r,&mut b);
     assert_eq!(r.get_status_overflow(), true);
+  }
+
+  #[test]
+  fn test_run_pha() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0xFF);
+    r.set_S(0x10);
+    b.memory[0x80] = 0x48;
+    run(&mut r, &mut b);
+    assert_eq!(b.memory[0x0110], 0xFF);
+  }
+
+  #[test]
+  fn test_run_php() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_Status(0xFF);
+    r.set_S(0x10);
+    b.memory[0x80] = 0x08;
+    run(&mut r, &mut b);
+    assert_eq!(b.memory[0x0110],0xFF)
   }
 }

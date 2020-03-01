@@ -222,7 +222,9 @@ lazy_static! {
     m.insert(0xF9, Opecode{ name: Instruction::SBC, mode: Addressing::AbsoluteY, cycle: 4});
     m.insert(0xE1, Opecode{ name: Instruction::SBC, mode: Addressing::IndirectX, cycle: 6});
     m.insert(0xF1, Opecode{ name: Instruction::SBC, mode: Addressing::IndirectY, cycle: 5});
-
+    // stack
+    m.insert(0x48, Opecode{ name: Instruction::PHA, mode: Addressing::Implied, cycle: 3});
+    m.insert(0x08, Opecode{ name: Instruction::PHP, mode: Addressing::Implied, cycle: 3});
     m
   };
 }

@@ -390,6 +390,15 @@ pub fn sbc<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
     .set_A(computed as Data);
 }
 
+pub fn pha<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  push(register.get_A(), register, bus);
+}
+
+pub fn php<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U){
+  push(register.get_Status(), register, bus);
+}
+
+
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
   let addr = register.get_S() as Addr;
   bus.write(0x0100 | addr, data);
@@ -401,6 +410,7 @@ fn pop<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
   let stack = register.get_S() as Addr;
   bus.read(0x0100 | stack)
 }
+
 
 
 fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
@@ -423,7 +433,7 @@ mod test {
   impl MockBus {
     fn new() -> Self {
       MockBus {
-        memory: vec!(0; 256)
+        memory: vec!(0; 65535)
       }
     }
   }
@@ -954,6 +964,26 @@ mod test {
     b.memory[0x10] = 0x80;
     sbc(0x10, &mut r, &mut b);
     assert_eq!(r.get_status_overflow(), true);
+  }
+
+  #[test]
+  fn test_pha() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0xFF);
+    r.set_S(0x10);
+    pha(&mut r, &mut b);
+    assert_eq!(b.memory[0x0110], 0xFF)
+  }
+
+  #[test]
+  fn test_php() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_Status(0xFF);
+    r.set_S(0x10);
+    php(&mut r, &mut b);
+    assert_eq!(b.memory[0x0110],0xFF)
   }
 
 }
