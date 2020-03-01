@@ -399,6 +399,21 @@ pub fn php<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U){
 }
 
 
+pub fn pla<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let v = pop(register, bus);
+  register
+    .update_status_negative_by(v)
+    .update_status_zero_by(v)
+    .set_A(v);
+}
+
+pub fn plp<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let v = pop(register, bus);
+  register.set_Status(v);
+}
+
+
+
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
   let addr = register.get_S() as Addr;
   bus.write(0x0100 | addr, data);
@@ -410,8 +425,6 @@ fn pop<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
   let stack = register.get_S() as Addr;
   bus.read(0x0100 | stack)
 }
-
-
 
 fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
   ((v << 1) as Data | if register.get_status_carry() { 0x01 } else { 0x00 }) as Data
@@ -984,6 +997,26 @@ mod test {
     r.set_S(0x10);
     php(&mut r, &mut b);
     assert_eq!(b.memory[0x0110],0xFF)
+  }
+
+  #[test]
+  fn test_pla() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_S(0x10);
+    b.memory[0x0111] = 0xFF;
+    pla(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0xFF);
+  }
+
+  #[test]
+  fn test_plp() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_S(0x10);
+    b.memory[0x0111] = 0xFF;
+    plp(&mut r, &mut b);
+    assert_eq!(r.get_Status(), 0xFF);
   }
 
 }

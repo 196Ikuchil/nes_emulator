@@ -225,6 +225,8 @@ lazy_static! {
     // stack
     m.insert(0x48, Opecode{ name: Instruction::PHA, mode: Addressing::Implied, cycle: 3});
     m.insert(0x08, Opecode{ name: Instruction::PHP, mode: Addressing::Implied, cycle: 3});
+    m.insert(0x68, Opecode{ name: Instruction::PLA, mode: Addressing::Implied, cycle: 4});
+    m.insert(0x28, Opecode{ name: Instruction::PLP, mode: Addressing::Implied, cycle: 4});
     m
   };
 }
