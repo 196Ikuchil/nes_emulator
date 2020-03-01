@@ -395,7 +395,7 @@ pub fn pha<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
 }
 
 pub fn php<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U){
-  push(register.get_Status(), register, bus);
+  push(register.get_Status(), register, bus); // registers.set_break(true);?
 }
 
 
@@ -408,12 +408,24 @@ pub fn pla<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
 }
 
 pub fn plp<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
-  let v = pop(register, bus);
+  let v = pop(register, bus); //  registers.set_reserved(true);?
   register.set_Status(v);
 }
 
 pub fn jmp<T:CpuRegister>(operand: Addr, register: &mut T) {
   register.set_PC(operand);
+}
+
+pub fn jsr<T:CpuRegister, U: CpuBus>(operand: Addr, register: &mut T, bus: &mut U) {
+  let addr = register.get_PC() - 1; // auto incremented in fetch
+  push((addr >> 8) as u8, register, bus);
+  push(addr as u8, register, bus);
+  register.set_PC(operand);
+}
+
+pub fn rts<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  pop_pc(register, bus);
+  register.increment_PC();
 }
 
 
@@ -428,6 +440,12 @@ fn pop<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
   register.inc_S();
   let stack = register.get_S() as Addr;
   bus.read(0x0100 | stack)
+}
+
+fn pop_pc<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let lower = pop(register, bus) as u16;
+  let upper = pop(register, bus) as u16;
+  register.set_PC(upper << 8 | lower);
 }
 
 fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
@@ -1030,4 +1048,26 @@ mod test {
     assert_eq!(r.get_PC(), 0x10);
   }
 
+  #[test]
+  fn test_jsr() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x0204);
+    r.set_S(0x30);
+    jsr(0x10, &mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x10);
+    assert_eq!(b.memory[0x0130], 0x02);
+    assert_eq!(b.memory[0x012F], 0x03);
+  }
+
+  #[test]
+  fn test_rts() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x0204);
+    r.set_S(0x30);
+    jsr(0x10, &mut r, &mut b);
+    rts(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x0204);
+  }
 }

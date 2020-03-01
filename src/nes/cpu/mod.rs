@@ -72,6 +72,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::PLP => plp(register, cpu_bus),
 
     Instruction::JMP => jmp(operand, register),
+    Instruction::JSR => jsr(operand, register, cpu_bus),
+    Instruction::RTS => rts(register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -736,5 +738,35 @@ mod test {
     b.memory[0x82] = 0x02;
     run(&mut r, &mut b);
     assert_eq!(r.get_PC(), 0x0201);
+  }
+
+  #[test]
+  fn test_run_jsr() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_S(0x30);
+    b.memory[0x80] = 0x20;
+    b.memory[0x81] = 0x11;
+    b.memory[0x82] = 0x22;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x2211);
+    assert_eq!(b.memory[0x0130], 0x00);
+    assert_eq!(b.memory[0x012F], 0x82);
+  }
+
+  #[test]
+  fn test_run_rts() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_S(0x30);
+    b.memory[0x80] = 0x20;
+    b.memory[0x81] = 0x11;
+    b.memory[0x82] = 0x22;
+    b.memory[0x2211] = 0x60;
+    run(&mut r, &mut b);
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x0083);
   }
 }
