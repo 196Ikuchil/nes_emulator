@@ -78,6 +78,8 @@ pub trait CpuRegister {
   fn increment_PC(&mut self) -> &mut Self;
   fn inc_S(&mut self) -> &mut Self;
   fn dec_S(&mut self) -> &mut Self;
+  fn get_Status(&mut self) -> Data;
+  fn set_Status(&mut self, v: Data) -> &mut Self;
 }
 
 impl CpuRegister for Register {
@@ -221,6 +223,25 @@ impl CpuRegister for Register {
     self.S -= 1;
     self
   }
+
+  fn get_Status(&mut self) -> Data {
+    bool2u8(self.P.negative) << 7 | bool2u8(self.P.overflow) << 6 |
+    bool2u8(self.P.reserved) << 5 | bool2u8(self.P.break_mode) << 4 |
+    bool2u8(self.P.decimal_mode) << 3 | bool2u8(self.P.interrupt) << 2 |
+    bool2u8(self.P.zero) << 1 | bool2u8(self.P.carry) as Data
+  }
+
+  fn set_Status(&mut self, v: Data) -> &mut Self {
+    self.P.negative = v & 0x80 == 0x80;
+    self.P.overflow = v & 0x40 == 0x40;
+    self.P.reserved = v & 0x20 == 0x20;
+    self.P.break_mode = v & 0x10 == 0x10;
+    self.P.decimal_mode = v & 0x08 == 0x08;
+    self.P.interrupt = v & 0x04 == 0x04;
+    self.P.zero = v & 0x02 == 0x02;
+    self.P.carry = v & 0x01 == 0x01;
+    self
+  }
 }
 
 #[test]
@@ -235,4 +256,25 @@ fn set_a() {
   let mut r = Register::new();
   let a = r.set_A(0x01);
   assert_eq!(a.get_A(), 0x01)
+}
+
+#[test]
+fn test_set_Status() {
+  let mut r = Register::new();
+  r.set_Status(0xFF);
+  assert_eq!(r.get_status_negative(),true);
+  assert_eq!(r.get_status_overflow(),true);
+  assert_eq!(r.get_status_reserved(),true);
+  assert_eq!(r.get_status_break_mode(), true);
+  assert_eq!(r.get_status_decimal_mode(), true);
+  assert_eq!(r.get_status_interrupt(), true);
+  assert_eq!(r.get_status_zero(), true);
+  assert_eq!(r.get_status_carry(),true);
+}
+
+#[test]
+fn test_get_Status() {
+  let mut r = Register::new();
+  r.set_Status(0xFF);
+  assert_eq!(r.get_Status(),0xFF);
 }
