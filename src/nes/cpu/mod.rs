@@ -63,6 +63,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::ROL => rol(operand, register, cpu_bus),
     Instruction::ROR if code.mode == Addressing::Accumulator => ror_acc(register),
     Instruction::ROR => ror(operand, register, cpu_bus),
+    Instruction::SBC if code.mode == Addressing::Immediate => sbc_imm(operand, register),
+    Instruction::SBC => sbc(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -602,5 +604,70 @@ mod test {
     b.memory[0x10] = 0x02;
     run(&mut r, &mut b);
     assert_eq!(b.memory[0x10], 0x01)
+  }
+
+  #[test]
+  fn test_run_sbc_imm() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0x03);
+    r.set_status_carry(true);
+    b.memory[0x80] = 0xE9;
+    b.memory[0x81] = 0x02;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(),0x01);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_PC(0x80);
+    r.set_A(0x04);
+    r.set_status_carry(false);
+    b.memory[0x80] = 0xE9;
+    b.memory[0x81] = 0x03;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(),0x00);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_PC(0x80);
+    r.set_A(0x01);
+    r.set_status_carry(true);
+    b.memory[0x80] = 0xE9;
+    b.memory[0x81] = 0x80;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_overflow(), true);
+  }
+
+  #[test]
+  fn test_run_sbc_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0x03);
+    r.set_status_carry(true);
+    b.memory[0x80] = 0xE5;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x02;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(),0x01);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_PC(0x80);
+    r.set_A(0x04);
+    r.set_status_carry(false);
+    b.memory[0x80] = 0xE5;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x03;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(),0x00);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_PC(0x80);
+    r.set_A(0x01);
+    r.set_status_carry(true);
+    b.memory[0x80] = 0xE5;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0x80;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_overflow(), true);
   }
 }

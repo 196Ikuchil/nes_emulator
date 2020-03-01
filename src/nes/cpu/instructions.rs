@@ -367,6 +367,28 @@ pub fn ror<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
   bus.write(operand, computed);
 }
 
+pub fn sbc_imm<T:CpuRegister>(operand: Word, register: &mut T) {
+  let computed = (register.get_A() as i16) - (operand as i16) - (bool2u8(!register.get_status_carry()) as i16);
+  let a = register.get_A();
+  register
+    .set_status_overflow( (((a ^ operand as Data) & 0x80) != 0) && (((a ^ computed as Data) & 0x80)!= 0))
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed >= 0)
+    .set_A(computed as Data);
+}
+
+pub fn sbc<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let fetched = bus.read(operand);
+  let computed = (register.get_A() as i16) - (fetched as i16) - (bool2u8(!register.get_status_carry()) as i16);
+  let a = register.get_A();
+  register
+    .set_status_overflow( (((a ^ fetched as Data) & 0x80) != 0) && (((a ^ computed as Data) & 0x80)!= 0))
+    .update_status_negative_by(computed as Data)
+    .update_status_zero_by(computed as Data)
+    .set_status_carry(computed >= 0)
+    .set_A(computed as Data);
+}
 
 fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
   ((v << 1) as Data | if register.get_status_carry() { 0x01 } else { 0x00 }) as Data
@@ -874,4 +896,51 @@ mod test {
     ror(0x80, &mut r, &mut b);
     assert_eq!(b.memory[0x80], 0x80);
   }
+
+  #[test]
+  fn test_sbc_imm() {
+    let mut r = Register::new();
+    r.set_A(0x03);
+    r.set_status_carry(true);
+    sbc_imm(0x02, &mut r);
+    assert_eq!(r.get_A(),0x01);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x04);
+    r.set_status_carry(false);
+    sbc_imm(0x03, &mut r);
+    assert_eq!(r.get_A(),0x00);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x01);
+    r.set_status_carry(true);
+    sbc_imm(0x80, &mut r);
+    assert_eq!(r.get_status_overflow(), true);
+  }
+
+  #[test]
+  fn test_sbc() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0x03);
+    r.set_status_carry(true);
+    b.memory[0x10] = 0x02;
+    sbc(0x10, &mut r, &mut b);
+    assert_eq!(r.get_A(),0x01);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x04);
+    r.set_status_carry(false);
+    b.memory[0x10] = 0x03;
+    sbc(0x10, &mut r, &mut b);
+    assert_eq!(r.get_A(),0x00);
+    assert_eq!(r.get_status_overflow(), false);
+
+    r.set_A(0x01);
+    r.set_status_carry(true);
+    b.memory[0x10] = 0x80;
+    sbc(0x10, &mut r, &mut b);
+    assert_eq!(r.get_status_overflow(), true);
+  }
+
 }
