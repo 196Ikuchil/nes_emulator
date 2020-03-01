@@ -252,6 +252,22 @@ pub fn dey<T: CpuRegister>(register: &mut T) {
     .set_Y(y as Data);
 }
 
+pub fn eor_imm<T: CpuRegister>(operand: Word, register: &mut T) {
+  let computed = operand as Data ^ register.get_A();
+  register
+    .update_status_negative_by(computed)
+    .update_status_zero_by(computed)
+    .set_A(computed);
+}
+
+pub fn eor<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
+  let computed = bus.read(operand) ^ register.get_A();
+  register
+    .update_status_negative_by(computed)
+    .update_status_zero_by(computed)
+    .set_A(computed);
+}
+
 #[cfg(test)]
 mod test {
   use super::super::super::cpu_register::Register;
@@ -604,5 +620,23 @@ mod test {
     r.set_Y(0x02);
     dey(&mut r);
     assert_eq!(r.get_Y(), 0x01)
+  }
+
+  #[test]
+  fn test_eor_imm() {
+    let mut r = Register::new();
+    r.set_A(0xF0);
+    eor_imm(0x0F, &mut r);
+    assert_eq!(r.get_A(),0xFF)
+  }
+
+  #[test]
+  fn test_eor() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_A(0x0F);
+    b.memory[0x80] = 0xF0;
+    eor(0x80, &mut r, &mut b);
+    assert_eq!(r.get_A(), 0xFF)
   }
 }

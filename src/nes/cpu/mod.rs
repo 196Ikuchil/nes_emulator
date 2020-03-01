@@ -50,6 +50,8 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::DEC => dec(operand, register, cpu_bus),
     Instruction::DEX => dex(register),
     Instruction::DEY => dey(register),
+    Instruction::EOR if code.mode == Addressing::Immediate => eor_imm(operand, register),
+    Instruction::EOR => eor(operand, register, cpu_bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -434,5 +436,30 @@ mod test {
     b.memory[0x80] = 0x88;
     run(&mut r, &mut b);
     assert_eq!(r.get_Y(), 0x01)
+  }
+
+  #[test]
+  fn test_run_eor_imm() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0x0F);
+    b.memory[0x80] = 0x49;
+    b.memory[0x81] = 0xF0;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_eor_zpg() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_A(0x0F);
+    b.memory[0x80] = 0x45;
+    b.memory[0x81] = 0x10;
+    b.memory[0x10] = 0xF0;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0xFF)
   }
 }
