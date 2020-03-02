@@ -11,6 +11,11 @@ use super::cpu_register::CpuRegister;
 use super::types::{Data, Addr, Word};
 use super::cpu_bus::CpuBus;
 
+pub fn reset<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let addr = bus.read_word(0xFFFC);
+  register.set_PC(addr);
+}
+
 pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &mut bool) {
 
   if *_nmi {
@@ -134,6 +139,16 @@ mod test {
     fn write(&mut self, a: Addr, d: Data)  {
       self.memory[a as usize] = d
     }
+  }
+
+  #[test]
+  fn test_reset() {
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    b.memory[0xFFFC] = 0x11;
+    b.memory[0xFFFD] = 0x22;
+    reset(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x1122);
   }
 
   #[test]
