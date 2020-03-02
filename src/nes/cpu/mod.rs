@@ -83,6 +83,14 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::BPL => bpl(operand, register),
     Instruction::BVC => bvc(operand, register),
     Instruction::BVS => bvs(operand, register),
+
+    Instruction::CLC => clc(register),
+    Instruction::CLD => cld(register),
+    Instruction::CLI => cli(register),
+    Instruction::CLV => clv(register),
+    Instruction::SEC => sec(register),
+    Instruction::SED => sed(register),
+    Instruction::SEI => sei(register),
     _ => panic!("Invalid code"),
   }
 }
@@ -891,6 +899,47 @@ mod test {
     b.memory[0x81] = 0x10;
     run(&mut r, &mut b);
     assert_eq!(r.get_PC(), 0x92);
+  }
+
+  #[test]
+  fn test_flag_ope() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_status_carry(true);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x18;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_carry(), false);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x38;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_carry(), true);
+
+    r.set_status_decimal_mode(true);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xD8;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_decimal_mode(), false);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xF8;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_decimal_mode(), true);
+
+    r.set_status_interrupt(true);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x58;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_interrupt(), false);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x78;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_interrupt(), true);
+
+    r.set_status_overflow(true);
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xB8;
+    run(&mut r,&mut b);
+    assert_eq!(r.get_status_overflow(), false);
   }
 
 }

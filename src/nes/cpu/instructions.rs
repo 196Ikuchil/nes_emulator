@@ -482,6 +482,34 @@ pub fn bvs<T:CpuRegister>(operand: Addr, register: &mut T) {
   }
 }
 
+pub fn clc<T: CpuRegister>(register: &mut T) {
+  register.set_status_carry(false);
+}
+
+pub fn cld<T: CpuRegister>(register: &mut T) {
+  register.set_status_decimal_mode(false);
+}
+
+pub fn cli<T: CpuRegister>(register: &mut T) {
+  register.set_status_interrupt(false);
+}
+
+pub fn clv<T: CpuRegister>(register: &mut T) {
+  register.set_status_overflow(false);
+}
+
+pub fn sec<T: CpuRegister>(register: &mut T) {
+  register.set_status_carry(true);
+}
+
+pub fn sed<T: CpuRegister>(register: &mut T) {
+  register.set_status_decimal_mode(true);
+}
+
+pub fn sei<T: CpuRegister>(register: &mut T) {
+  register.set_status_interrupt(true);
+}
+
 
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
   let addr = register.get_S() as Addr;
@@ -1242,5 +1270,31 @@ mod test {
     r.set_status_overflow(false);
     bvs(0x20, &mut r);
     assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_flag_ope() {
+    let mut r = Register::new();
+    r.set_status_carry(true);
+    clc(&mut r);
+    assert_eq!(r.get_status_carry(), false);
+    sec(&mut r);
+    assert_eq!(r.get_status_carry(), true);
+
+    r.set_status_decimal_mode(true);
+    cld(&mut r);
+    assert_eq!(r.get_status_decimal_mode(), false);
+    sed(&mut r);
+    assert_eq!(r.get_status_decimal_mode(), true);
+
+    r.set_status_interrupt(true);
+    cli(&mut r);
+    assert_eq!(r.get_status_interrupt(), false);
+    sei(&mut r);
+    assert_eq!(r.get_status_interrupt(), true);
+
+    r.set_status_overflow(true);
+    clv(&mut r);
+    assert_eq!(r.get_status_overflow(), false);
   }
 }

@@ -236,13 +236,20 @@ lazy_static! {
     // branch
     m.insert(0x90, Opecode{ name: Instruction::BCC, mode: Addressing::Relative, cycle:2});
     m.insert(0xB0, Opecode{ name: Instruction::BCS, mode: Addressing::Relative, cycle:2});
-
     m.insert(0xF0, Opecode{ name: Instruction::BEQ, mode: Addressing::Relative, cycle:2});
     m.insert(0x30, Opecode{ name: Instruction::BMI, mode: Addressing::Relative, cycle:2});
     m.insert(0xD0, Opecode{ name: Instruction::BNE, mode: Addressing::Relative, cycle:2});
     m.insert(0x10, Opecode{ name: Instruction::BPL, mode: Addressing::Relative, cycle:2});
     m.insert(0x50, Opecode{ name: Instruction::BVC, mode: Addressing::Relative, cycle:2});
     m.insert(0x70, Opecode{ name: Instruction::BVS, mode: Addressing::Relative, cycle:2});
+    // flag
+    m.insert(0x18, Opecode{ name: Instruction::CLC, mode: Addressing::Implied, cycle: 2});
+    m.insert(0xD8, Opecode{ name: Instruction::CLD, mode: Addressing::Implied, cycle: 2});
+    m.insert(0x58, Opecode{ name: Instruction::CLI, mode: Addressing::Implied, cycle: 2});
+    m.insert(0xB8, Opecode{ name: Instruction::CLV, mode: Addressing::Implied, cycle: 2});
+    m.insert(0x38, Opecode{ name: Instruction::SEC, mode: Addressing::Implied, cycle: 2});
+    m.insert(0xF8, Opecode{ name: Instruction::SED, mode: Addressing::Implied, cycle: 2});
+    m.insert(0x78, Opecode{ name: Instruction::SEI, mode: Addressing::Implied, cycle: 2});
     m
   };
 }
