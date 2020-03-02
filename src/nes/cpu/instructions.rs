@@ -440,6 +440,12 @@ pub fn bcc<T:CpuRegister>(operand: Addr, register: &mut T) {
   }
 }
 
+pub fn bcs<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if register.get_status_carry() {
+    branch(operand, register);
+  }
+}
+
 
 
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
@@ -1116,6 +1122,18 @@ mod test {
 
     r.set_status_carry(true);
     bcc(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_bcs() {
+    let mut r = Register::new();
+    r.set_status_carry(true);
+    bcs(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_carry(false);
+    bcs(0x20, &mut r);
     assert_ne!(r.get_PC(), 0x20);
   }
 }

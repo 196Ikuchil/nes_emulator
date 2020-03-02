@@ -235,7 +235,7 @@ lazy_static! {
     m.insert(0x40, Opecode{ name: Instruction::RTI, mode: Addressing::Implied, cycle: 6});
     // branch
     m.insert(0x90, Opecode{ name: Instruction::BCC, mode: Addressing::Relative, cycle:2});
-
+    m.insert(0xB0, Opecode{ name: Instruction::BCS, mode: Addressing::Relative, cycle:2});
     m
   };
 }
