@@ -434,6 +434,12 @@ pub fn rti<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   register.increment_PC();
 }
 
+pub fn bcc<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if !register.get_status_carry() {
+    branch(operand, register);
+  }
+}
+
 
 
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
@@ -466,6 +472,10 @@ fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
 
 fn rotate_to_right<T: CpuRegister>(register: &mut T, v: Data) -> Data {
   ((v >> 1) as Data | if register.get_status_carry() { 0x80 } else { 0x00 }) as Data
+}
+
+fn branch<T: CpuRegister>(addr: Addr, register: &mut T) {
+  register.set_PC(addr);
 }
 
 #[cfg(test)]
@@ -1095,5 +1105,17 @@ mod test {
     rti(&mut r, &mut b);
     assert_eq!(r.get_PC(), 0x0204);
     assert_eq!(r.get_Status(),0xFF);
+  }
+
+  #[test]
+  fn test_bcc() {
+    let mut r = Register::new();
+    r.set_status_carry(false);
+    bcc(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_carry(true);
+    bcc(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
   }
 }
