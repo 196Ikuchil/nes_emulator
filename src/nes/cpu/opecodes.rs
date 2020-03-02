@@ -250,6 +250,9 @@ lazy_static! {
     m.insert(0x38, Opecode{ name: Instruction::SEC, mode: Addressing::Implied, cycle: 2});
     m.insert(0xF8, Opecode{ name: Instruction::SED, mode: Addressing::Implied, cycle: 2});
     m.insert(0x78, Opecode{ name: Instruction::SEI, mode: Addressing::Implied, cycle: 2});
+    // others
+    m.insert(0x00, Opecode{ name: Instruction::BRK, mode: Addressing::Implied, cycle: 7});
+    m.insert(0xEA, Opecode{ name: Instruction::NOP, mode: Addressing::Implied, cycle: 2});
     m
   };
 }

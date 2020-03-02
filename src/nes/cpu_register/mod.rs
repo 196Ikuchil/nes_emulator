@@ -76,6 +76,7 @@ pub trait CpuRegister {
   fn update_status_negative_by(&mut self, v: Data) -> &mut Self;
   fn update_status_zero_by(&mut self, v: Data) -> &mut Self;
   fn increment_PC(&mut self) -> &mut Self;
+  fn decrement_PC(&mut self) -> &mut Self;
   fn inc_S(&mut self) -> &mut Self;
   fn dec_S(&mut self) -> &mut Self;
   fn get_Status(&mut self) -> Data;
@@ -211,6 +212,11 @@ impl CpuRegister for Register {
 
   fn increment_PC(&mut self) -> &mut Self {
     self.PC += 1;
+    self
+  }
+
+  fn decrement_PC(&mut self) -> &mut Self {
+    self.PC -= 1;
     self
   }
 

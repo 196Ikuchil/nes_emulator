@@ -510,6 +510,17 @@ pub fn sei<T: CpuRegister>(register: &mut T) {
   register.set_status_interrupt(true);
 }
 
+pub fn brk<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  if register.get_status_interrupt() { // ?
+    return
+  }
+  register.set_status_break_mode(true);
+  register.increment_PC();
+  push_pc(register, bus);
+  push_status(register, bus);
+  register.set_status_interrupt(true);
+  register.set_PC(bus.read_word(0xFFFE));
+}
 
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
   let addr = register.get_S() as Addr;
@@ -533,6 +544,17 @@ fn pop_pc<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
 fn pop_status<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   let p = pop(register, bus);
   register.set_Status(p);
+}
+
+fn push_pc<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let pc = register.get_PC();
+  push((pc >> 8) as u8, register, bus);
+  push(pc as u8, register, bus);
+}
+
+fn push_status<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let status = register.get_Status();
+  push(status, register, bus);
 }
 
 fn rotate_to_left<T: CpuRegister>(register: &mut T, v: Data) -> Data {
@@ -559,7 +581,7 @@ mod test {
   impl MockBus {
     fn new() -> Self {
       MockBus {
-        memory: vec!(0; 65535)
+        memory: vec!(0; 65536)
       }
     }
   }
@@ -1296,5 +1318,25 @@ mod test {
     r.set_status_overflow(true);
     clv(&mut r);
     assert_eq!(r.get_status_overflow(), false);
+  }
+
+  #[test]
+  fn test_brk() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_S(0x10);
+    r.set_Status(0xFF);
+    r.set_status_interrupt(true);
+    b.memory[0xFFFE] = 0x22;
+    b.memory[0xFFFF] = 0x11;
+    brk(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x80);
+
+    r.set_status_interrupt(false);
+    brk(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x2211);
+    assert_eq!(b.memory[0x010F], 0x81);
+    assert_eq!(b.memory[0x010E], 0xFB);
   }
 }

@@ -91,6 +91,9 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::SEC => sec(register),
     Instruction::SED => sed(register),
     Instruction::SEI => sei(register),
+
+    Instruction::BRK => brk(register, cpu_bus),
+    Instruction::NOP => (),
     _ => panic!("Invalid code"),
   }
 }
@@ -107,7 +110,7 @@ mod test {
   impl MockBus {
     fn new() -> Self {
       MockBus {
-        memory: vec!(0; 65535)
+        memory: vec!(0; 65536)
       }
     }
   }
@@ -942,4 +945,22 @@ mod test {
     assert_eq!(r.get_status_overflow(), false);
   }
 
+  #[test]
+  fn test_run_brk() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+
+    r.set_PC(0x80);
+    r.set_S(0x10);
+    r.set_Status(0xFF);
+    b.memory[0x80] = 0x00;
+    b.memory[0xFFFE] = 0x22;
+    b.memory[0xFFFF] = 0x11;
+
+    r.set_status_interrupt(false);
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x2211);
+    assert_eq!(b.memory[0x010F], 0x82);
+    assert_eq!(b.memory[0x010E], 0xFB);
+  }
 }
