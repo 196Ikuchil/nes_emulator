@@ -309,6 +309,21 @@ mod test {
   }
 
   #[test]
+  fn test_run_adc_imm() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xA9;
+    b.memory[0x81] = 0x01;
+    b.memory[0x82] = 0x69;
+    b.memory[0x83] = 0x01;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0x01);
+    run(&mut r, &mut b);
+    assert_eq!(r.get_A(), 0x02);
+  }
+
+  #[test]
   fn test_run_and_imm() {
     let mut r = Register::new();
     let mut b = MockBus::new();
