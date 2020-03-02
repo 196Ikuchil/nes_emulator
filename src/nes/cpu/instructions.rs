@@ -3,7 +3,14 @@ use super::CpuRegister;
 use super::CpuBus;
 use super::super::helper::*;
 
-use std::fmt::Debug;
+pub fn nmi<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  register.set_status_break_mode(false);
+  push_pc(register, bus);
+  push_status(register, bus);
+  register.set_status_interrupt(true);
+  let addr = bus.read_word(0xFFFA);
+  register.set_PC(addr);
+}
 
 pub fn lda_imm<T: CpuRegister>(operand: Word, register: &mut T) {
     register
@@ -600,6 +607,21 @@ mod test {
     fn write(&mut self, a: Addr, d: Data)  {
       self.memory[a as usize] = d
     }
+  }
+
+  #[test]
+  fn test_nmi() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_S(0x10);
+    r.set_Status(0xFF);
+    b.memory[0xFFFA] = 0x22;
+    b.memory[0xFFFB] = 0x11;
+    nmi(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x2211);
+    assert_eq!(b.memory[0x010F], 0x80);
+    assert_eq!(b.memory[0x010E], 0xEF);
   }
 
   #[test]

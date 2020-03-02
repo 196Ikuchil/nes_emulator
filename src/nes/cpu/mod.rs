@@ -11,7 +11,17 @@ use super::cpu_register::CpuRegister;
 use super::types::{Data, Addr, Word};
 use super::cpu_bus::CpuBus;
 
-pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
+pub fn reset<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  let addr = bus.read_word(0xFFFC);
+  register.set_PC(addr);
+}
+
+pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &mut bool) {
+
+  if *_nmi {
+    nmi(register, cpu_bus);
+    *_nmi = false;
+  }
 
   let code = fetch(register, cpu_bus);
   let ref opemap = opecodes::OPEMAP;
@@ -132,13 +142,35 @@ mod test {
   }
 
   #[test]
+  fn test_reset() {
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    b.memory[0xFFFC] = 0x11;
+    b.memory[0xFFFD] = 0x22;
+    reset(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x1122);
+  }
+
+  #[test]
+  fn test_run_nmi_lda_imm() {
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    b.memory[0xFFFA] = 0x00;
+    b.memory[0xFFFB] = 0x80;
+    b.memory[0x80] = 0xA9;
+    b.memory[0x81] = 0xFF;
+    run(&mut r ,&mut b, &mut true);
+    assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
   fn test_run_lda_imm() {
     let mut b = MockBus::new();
     let mut r = Register::new();
     r.set_PC(0x80);
     b.memory[0x80] = 0xA9;
     b.memory[0x81] = 0xFF;
-    run(&mut r ,&mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
   }
 
@@ -151,7 +183,7 @@ mod test {
     b.memory[0x80] = 0xB5;
     b.memory[0x81] = 0x11;
     b.memory[0x12] = 0xFF;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
   }
 
@@ -162,7 +194,7 @@ mod test {
     r.set_PC(0x80);
     b.memory[0x80] = 0xA2;
     b.memory[0x81] = 0xFF;
-    run(&mut r ,&mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_X(), 0xFF)
   }
 
@@ -175,7 +207,7 @@ mod test {
     b.memory[0x80] = 0xB6;
     b.memory[0x81] = 0x11;
     b.memory[0x12] = 0xFF;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_X(), 0xFF)
   }
 
@@ -186,7 +218,7 @@ mod test {
     r.set_PC(0x80);
     b.memory[0x80] = 0xA0;
     b.memory[0x81] = 0xFF;
-    run(&mut r ,&mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_Y(), 0xFF)
   }
 
@@ -199,7 +231,7 @@ mod test {
     b.memory[0x80] = 0xB4;
     b.memory[0x81] = 0x11;
     b.memory[0x12] = 0xFF;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_Y(), 0xFF)
   }
 
@@ -212,7 +244,7 @@ mod test {
     r.set_X(0x01);
     b.memory[0x80] = 0x95;
     b.memory[0x81] = 0x11;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.read(0x12), 0xFF)
   }
 
@@ -225,7 +257,7 @@ mod test {
     r.set_Y(0x01);
     b.memory[0x80] = 0x96;
     b.memory[0x81] = 0x11;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.read(0x12),0xFF)
   }
 
@@ -238,7 +270,7 @@ mod test {
     r.set_X(0x01);
     b.memory[0x80] = 0x94;
     b.memory[0x81] = 0x11;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.read(0x12), 0xFF)
   }
 
@@ -249,7 +281,7 @@ mod test {
     r.set_PC(0x80);
     r.set_A(0xFF);
     b.memory[0x80] = 0xAA;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_X(),0xFF)
   }
 
@@ -260,7 +292,7 @@ mod test {
     r.set_PC(0x80);
     r.set_A(0xFF);
     b.memory[0x80] = 0xA8;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_Y(),0xFF)
   }
 
@@ -271,7 +303,7 @@ mod test {
     r.set_PC(0x80);
     r.set_S(0xFF);
     b.memory[0x80] = 0xBA;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_X(), 0xFF)
   }
 
@@ -282,7 +314,7 @@ mod test {
     r.set_PC(0x80);
     r.set_X(0xFF);
     b.memory[0x80] = 0x8A;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
   }
 
@@ -293,7 +325,7 @@ mod test {
     r.set_PC(0x80);
     r.set_X(0xFF);
     b.memory[0x80] = 0x9A;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_S(), 0xFF)
   }
 
@@ -304,8 +336,23 @@ mod test {
     r.set_PC(0x80);
     r.set_Y(0xFF);
     b.memory[0x80] = 0x98;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
+  }
+
+  #[test]
+  fn test_run_adc_imm() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0xA9;
+    b.memory[0x81] = 0x01;
+    b.memory[0x82] = 0x69;
+    b.memory[0x83] = 0x01;
+    run(&mut r ,&mut b, &mut false);
+    assert_eq!(r.get_A(), 0x01);
+    run(&mut r ,&mut b, &mut false);
+    assert_eq!(r.get_A(), 0x02);
   }
 
   #[test]
@@ -316,7 +363,7 @@ mod test {
     r.set_A(0x01);
     b.memory[0x80] = 0x29;
     b.memory[0x81] = 0x11;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0x01)
   }
 
@@ -329,7 +376,7 @@ mod test {
     b.memory[0x80] = 0x25;
     b.memory[0x81] = 0x22;
     b.memory[0x22] = 0x11;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0x01)
   }
 
@@ -340,7 +387,7 @@ mod test {
     r.set_PC(0x80);
     r.set_A(0x01);
     b.memory[0x80] = 0x0A;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0x02)
   }
 
@@ -352,7 +399,7 @@ mod test {
     b.memory[0x80] = 0x06;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x01;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x10], 0x02)
   }
 
@@ -365,7 +412,7 @@ mod test {
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x40;
     r.set_A(0x40);
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_zero(), false);
     assert_eq!(r.get_status_negative(), false);
     assert_eq!(r.get_status_overflow(), true)
@@ -379,7 +426,7 @@ mod test {
     r.set_A(0x40);
     b.memory[0x80] = 0xC9;
     b.memory[0x81] = 0x50;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_negative(), true)
   }
 
@@ -392,7 +439,7 @@ mod test {
     b.memory[0x80] = 0xC5;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x50;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_negative(), true)
   }
 
@@ -404,7 +451,7 @@ mod test {
     r.set_X(0x40);
     b.memory[0x80] = 0xC9;
     b.memory[0x81] = 0x50;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_negative(), true)
   }
 
@@ -417,7 +464,7 @@ mod test {
     b.memory[0x80] = 0xC5;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x50;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_negative(), true)
   }
 
@@ -429,7 +476,7 @@ mod test {
     r.set_Y(0x40);
     b.memory[0x80] = 0xC9;
     b.memory[0x81] = 0x50;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_negative(), true)
   }
 
@@ -442,7 +489,7 @@ mod test {
     b.memory[0x80] = 0xC5;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x50;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_negative(), true)
   }
 
@@ -454,7 +501,7 @@ mod test {
     b.memory[0x80] = 0xC6;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x02;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x10], 0x01)
   }
 
@@ -465,7 +512,7 @@ mod test {
     r.set_PC(0x80);
     r.set_X(0x02);
     b.memory[0x80] = 0xCA;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_X(), 0x01)
   }
 
@@ -476,7 +523,7 @@ mod test {
     r.set_PC(0x80);
     r.set_Y(0x02);
     b.memory[0x80] = 0x88;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_Y(), 0x01)
   }
 
@@ -488,7 +535,7 @@ mod test {
     r.set_A(0x0F);
     b.memory[0x80] = 0x49;
     b.memory[0x81] = 0xF0;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
   }
 
@@ -501,7 +548,7 @@ mod test {
     b.memory[0x80] = 0x45;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0xF0;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
   }
 
@@ -513,7 +560,7 @@ mod test {
     b.memory[0x80] = 0xE6;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x02;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x10], 0x03)
   }
 
@@ -524,7 +571,7 @@ mod test {
     r.set_PC(0x80);
     r.set_X(0x02);
     b.memory[0x80] = 0xE8;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_X(), 0x03)
   }
 
@@ -535,7 +582,7 @@ mod test {
     r.set_PC(0x80);
     r.set_Y(0x02);
     b.memory[0x80] = 0xC8;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_Y(), 0x03)
   }
 
@@ -546,7 +593,7 @@ mod test {
     r.set_PC(0x80);
     r.set_A(0x02);
     b.memory[0x80] = 0x4A;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0x01)
   }
 
@@ -558,7 +605,7 @@ mod test {
     b.memory[0x80] = 0x46;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x02;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x10], 0x01)
   }
 
@@ -570,7 +617,7 @@ mod test {
     r.set_A(0xF0);
     b.memory[0x80] = 0x09;
     b.memory[0x81] = 0x0F;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
   }
 
@@ -583,7 +630,7 @@ mod test {
     b.memory[0x80] = 0x05;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x0F;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF)
   }
 
@@ -594,7 +641,7 @@ mod test {
     r.set_A(0x01);
     r.set_PC(0x80);
     b.memory[0x80] = 0x2A;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0x02);
   }
 
@@ -606,7 +653,7 @@ mod test {
     b.memory[0x80] = 0x26;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x01;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x10], 0x02)
   }
 
@@ -619,7 +666,7 @@ mod test {
     r.set_A(0x02);
     r.set_PC(0x80);
     b.memory[0x80] = 0x6A;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0x01);
   }
 
@@ -631,7 +678,7 @@ mod test {
     b.memory[0x80] = 0x66;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x02;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x10], 0x01)
   }
 
@@ -644,7 +691,7 @@ mod test {
     r.set_status_carry(true);
     b.memory[0x80] = 0xE9;
     b.memory[0x81] = 0x02;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(),0x01);
     assert_eq!(r.get_status_overflow(), false);
 
@@ -653,7 +700,7 @@ mod test {
     r.set_status_carry(false);
     b.memory[0x80] = 0xE9;
     b.memory[0x81] = 0x03;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(),0x00);
     assert_eq!(r.get_status_overflow(), false);
 
@@ -662,7 +709,7 @@ mod test {
     r.set_status_carry(true);
     b.memory[0x80] = 0xE9;
     b.memory[0x81] = 0x80;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_overflow(), true);
   }
 
@@ -676,7 +723,7 @@ mod test {
     b.memory[0x80] = 0xE5;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x02;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(),0x01);
     assert_eq!(r.get_status_overflow(), false);
 
@@ -686,7 +733,7 @@ mod test {
     b.memory[0x80] = 0xE5;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x03;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(),0x00);
     assert_eq!(r.get_status_overflow(), false);
 
@@ -696,7 +743,7 @@ mod test {
     b.memory[0x80] = 0xE5;
     b.memory[0x81] = 0x10;
     b.memory[0x10] = 0x80;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_overflow(), true);
   }
 
@@ -708,7 +755,7 @@ mod test {
     r.set_A(0xFF);
     r.set_S(0x10);
     b.memory[0x80] = 0x48;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x0110], 0xFF);
   }
 
@@ -720,7 +767,7 @@ mod test {
     r.set_Status(0xFF);
     r.set_S(0x10);
     b.memory[0x80] = 0x08;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(b.memory[0x0110],0xFF)
   }
 
@@ -732,7 +779,7 @@ mod test {
     r.set_S(0x10);
     b.memory[0x80] = 0x68;
     b.memory[0x0111] = 0xFF;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_A(), 0xFF);
   }
 
@@ -744,7 +791,7 @@ mod test {
     r.set_S(0x10);
     b.memory[0x80] = 0x28;
     b.memory[0x0111] = 0xFF;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_Status(), 0xFF);
   }
 
@@ -756,7 +803,7 @@ mod test {
     b.memory[0x80] = 0x4C;
     b.memory[0x81] = 0x01;
     b.memory[0x82] = 0x02;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x0201);
   }
 
@@ -769,7 +816,7 @@ mod test {
     b.memory[0x80] = 0x20;
     b.memory[0x81] = 0x11;
     b.memory[0x82] = 0x22;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x2211);
     assert_eq!(b.memory[0x0130], 0x00);
     assert_eq!(b.memory[0x012F], 0x82);
@@ -785,8 +832,8 @@ mod test {
     b.memory[0x81] = 0x11;
     b.memory[0x82] = 0x22;
     b.memory[0x2211] = 0x60;
-    run(&mut r, &mut b);
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x0083);
   }
 
@@ -802,9 +849,9 @@ mod test {
     b.memory[0x82] = 0x22;
     b.memory[0x2211] = 0x08;
     b.memory[0x2212] = 0x40;
-    run(&mut r, &mut b);
-    run(&mut r, &mut b);
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
+    run(&mut r ,&mut b, &mut false);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x83);
     assert_eq!(r.get_Status(),0xFF);
   }
@@ -817,7 +864,7 @@ mod test {
     r.set_status_carry(false);
     b.memory[0x80] = 0x90;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
 
@@ -829,7 +876,7 @@ mod test {
     r.set_status_carry(true);
     b.memory[0x80] = 0xB0;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
 
@@ -841,7 +888,7 @@ mod test {
     r.set_status_zero(true);
     b.memory[0x80] = 0xF0;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
 
@@ -853,7 +900,7 @@ mod test {
     r.set_status_negative(true);
     b.memory[0x80] = 0x30;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
 
@@ -865,7 +912,7 @@ mod test {
     r.set_status_zero(false);
     b.memory[0x80] = 0xD0;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
 
@@ -877,7 +924,7 @@ mod test {
     r.set_status_negative(false);
     b.memory[0x80] = 0x10;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
 
@@ -889,7 +936,7 @@ mod test {
     r.set_status_overflow(false);
     b.memory[0x80] = 0x50;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
   #[test]
@@ -900,7 +947,7 @@ mod test {
     r.set_status_overflow(true);
     b.memory[0x80] = 0x70;
     b.memory[0x81] = 0x10;
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x92);
   }
 
@@ -911,37 +958,37 @@ mod test {
     r.set_status_carry(true);
     r.set_PC(0x80);
     b.memory[0x80] = 0x18;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_carry(), false);
     r.set_PC(0x80);
     b.memory[0x80] = 0x38;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_carry(), true);
 
     r.set_status_decimal_mode(true);
     r.set_PC(0x80);
     b.memory[0x80] = 0xD8;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_decimal_mode(), false);
     r.set_PC(0x80);
     b.memory[0x80] = 0xF8;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_decimal_mode(), true);
 
     r.set_status_interrupt(true);
     r.set_PC(0x80);
     b.memory[0x80] = 0x58;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_interrupt(), false);
     r.set_PC(0x80);
     b.memory[0x80] = 0x78;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_interrupt(), true);
 
     r.set_status_overflow(true);
     r.set_PC(0x80);
     b.memory[0x80] = 0xB8;
-    run(&mut r,&mut b);
+run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_status_overflow(), false);
   }
 
@@ -958,7 +1005,7 @@ mod test {
     b.memory[0xFFFF] = 0x11;
 
     r.set_status_interrupt(false);
-    run(&mut r, &mut b);
+    run(&mut r ,&mut b, &mut false);
     assert_eq!(r.get_PC(), 0x2211);
     assert_eq!(b.memory[0x010F], 0x82);
     assert_eq!(b.memory[0x010E], 0xFB);
