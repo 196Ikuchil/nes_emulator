@@ -16,6 +16,7 @@ pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T
     Addressing::Implied => 0x0000,
     Addressing::Accumulator => 0x0000,
     Addressing::Immediate => fetch(register, bus) as Word,
+    Addressing::Relative => fetch_relative(register, bus),
     Addressing::Zeropage => fetch(register, bus) as Addr,
     Addressing::ZeropageX => fetch_zeropage_x(register, bus) as Addr,
     Addressing::ZeropageY => fetch_zeropage_y(register, bus) as Addr,
@@ -26,6 +27,14 @@ pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T
     Addressing::IndirectY => fetch_indirect_y(register, bus),
     _ => panic!("Invalid code"),
   }
+}
+
+fn fetch_relative<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
+  let base = fetch(register, bus) as Addr;
+  let dest = (base as i32) + (register.get_PC() as i32);
+  debug_assert!(dest >= 0x0);
+  debug_assert!(dest < 0x10000);
+  dest as Addr
 }
 
 fn fetch_zeropage_x<T: CpuRegister,U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
@@ -105,6 +114,16 @@ mod test {
     let v = fetch(&mut r ,&mut b);
     assert_eq!(r.get_PC(), 0x81);
     assert_eq!(v, 0xFF)
+  }
+
+  #[test]
+  fn test_fetch_relative() {
+    let mut b = MockBus::new();
+    let mut r = Register::new();
+    r.set_PC(0x80);
+    b.memory[0x80] = 0x10;
+    let addr = fetch_relative(&mut r, &mut b);
+    assert_eq!(addr, 0x91);
   }
 
   #[test]
