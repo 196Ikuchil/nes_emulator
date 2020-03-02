@@ -446,6 +446,41 @@ pub fn bcs<T:CpuRegister>(operand: Addr, register: &mut T) {
   }
 }
 
+pub fn beq<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if register.get_status_zero() {
+    branch(operand, register);
+  }
+}
+
+pub fn bmi<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if register.get_status_negative() {
+    branch(operand, register);
+  }
+}
+
+pub fn bne<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if !register.get_status_zero() {
+    branch(operand, register);
+  }
+}
+
+pub fn bpl<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if !register.get_status_negative() {
+    branch(operand, register);
+  }
+}
+
+pub fn bvc<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if !register.get_status_overflow() {
+    branch(operand, register);
+  }
+}
+
+pub fn bvs<T:CpuRegister>(operand: Addr, register: &mut T) {
+  if register.get_status_overflow() {
+    branch(operand, register);
+  }
+}
 
 
 fn push<T:CpuRegister, U: CpuBus>(data: Data, register: &mut T, bus: &mut U) {
@@ -1134,6 +1169,78 @@ mod test {
 
     r.set_status_carry(false);
     bcs(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_beq() {
+    let mut r = Register::new();
+    r.set_status_zero(true);
+    beq(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_zero(false);
+    beq(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_bmi() {
+    let mut r = Register::new();
+    r.set_status_negative(true);
+    bmi(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_negative(false);
+    bmi(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_bne() {
+    let mut r = Register::new();
+    r.set_status_zero(false);
+    bne(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_zero(true);
+    bne(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_bpl() {
+    let mut r = Register::new();
+    r.set_status_negative(false);
+    bpl(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_negative(true);
+    bpl(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_bvc() {
+    let mut r = Register::new();
+    r.set_status_overflow(false);
+    bvc(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_overflow(true);
+    bvc(0x20, &mut r);
+    assert_ne!(r.get_PC(), 0x20);
+  }
+
+  #[test]
+  fn test_bvs() {
+    let mut r = Register::new();
+    r.set_status_overflow(true);
+    bvs(0x10, &mut r);
+    assert_eq!(r.get_PC(), 0x10);
+
+    r.set_status_overflow(false);
+    bvs(0x20, &mut r);
     assert_ne!(r.get_PC(), 0x20);
   }
 }

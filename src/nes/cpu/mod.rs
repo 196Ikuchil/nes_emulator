@@ -77,6 +77,12 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U) {
     Instruction::RTI => rti(register, cpu_bus),
     Instruction::BCC => bcc(operand, register),
     Instruction::BCS => bcs(operand, register),
+    Instruction::BEQ => beq(operand, register),
+    Instruction::BMI => bmi(operand, register),
+    Instruction::BNE => bne(operand, register),
+    Instruction::BPL => bpl(operand, register),
+    Instruction::BVC => bvc(operand, register),
+    Instruction::BVS => bvs(operand, register),
     _ => panic!("Invalid code"),
   }
 }
@@ -815,4 +821,76 @@ mod test {
     run(&mut r, &mut b);
     assert_eq!(r.get_PC(), 0x92);
   }
+
+  #[test]
+  fn test_run_beq() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_status_zero(true);
+    b.memory[0x80] = 0xF0;
+    b.memory[0x81] = 0x10;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x92);
+  }
+
+  #[test]
+  fn test_run_bmi() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_status_negative(true);
+    b.memory[0x80] = 0x30;
+    b.memory[0x81] = 0x10;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x92);
+  }
+
+  #[test]
+  fn test_run_bne() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_status_zero(false);
+    b.memory[0x80] = 0xD0;
+    b.memory[0x81] = 0x10;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x92);
+  }
+
+  #[test]
+  fn test_run_bpl() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_status_negative(false);
+    b.memory[0x80] = 0x10;
+    b.memory[0x81] = 0x10;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x92);
+  }
+
+  #[test]
+  fn test_run_bvc() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_status_overflow(false);
+    b.memory[0x80] = 0x50;
+    b.memory[0x81] = 0x10;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x92);
+  }
+  #[test]
+  fn test_run_bvs() {
+    let mut r = Register::new();
+    let mut b = MockBus::new();
+    r.set_PC(0x80);
+    r.set_status_overflow(true);
+    b.memory[0x80] = 0x70;
+    b.memory[0x81] = 0x10;
+    run(&mut r, &mut b);
+    assert_eq!(r.get_PC(), 0x92);
+  }
+
 }

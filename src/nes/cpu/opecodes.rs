@@ -236,6 +236,13 @@ lazy_static! {
     // branch
     m.insert(0x90, Opecode{ name: Instruction::BCC, mode: Addressing::Relative, cycle:2});
     m.insert(0xB0, Opecode{ name: Instruction::BCS, mode: Addressing::Relative, cycle:2});
+
+    m.insert(0xF0, Opecode{ name: Instruction::BEQ, mode: Addressing::Relative, cycle:2});
+    m.insert(0x30, Opecode{ name: Instruction::BMI, mode: Addressing::Relative, cycle:2});
+    m.insert(0xD0, Opecode{ name: Instruction::BNE, mode: Addressing::Relative, cycle:2});
+    m.insert(0x10, Opecode{ name: Instruction::BPL, mode: Addressing::Relative, cycle:2});
+    m.insert(0x50, Opecode{ name: Instruction::BVC, mode: Addressing::Relative, cycle:2});
+    m.insert(0x70, Opecode{ name: Instruction::BVS, mode: Addressing::Relative, cycle:2});
     m
   };
 }
