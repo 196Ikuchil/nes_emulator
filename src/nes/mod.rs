@@ -3,8 +3,11 @@ mod cpu;
 mod cpu_register;
 mod types;
 mod helper;
+mod ram;
+mod ppu;
 
 use self::bus::*;
+use self::ram::Ram;
 
 #[derive(Debug)]
 pub struct Context {
