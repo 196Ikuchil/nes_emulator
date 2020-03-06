@@ -9,6 +9,8 @@ use self::ppu_data::PpuData;
 use self::ppu_scroll::PpuScroll;
 use super::super::types::{Data, Addr};
 use super::super::Ram;
+use super::palette::*;
+use super::PpuCtx;
 
 
 pub struct Register {
@@ -21,7 +23,7 @@ pub struct Register {
   pub ppu_scroll: PpuScroll,
 }
 
-// PPU power up state from https://github.com/bokuweb/rustynes/blob/master/src/nes/ppu/registers/mod.rs
+//from https://github.com/bokuweb/rustynes/blob/master/src/nes/ppu/registers/mod.rs
   // see. https://wiki.nesdev.com/w/index.php/PPU_power_up_state
   //
   // Memory map
@@ -44,7 +46,11 @@ pub struct Register {
   | 0x3F20-0x3FFF  |  mirror of 0x3F00-0x3F1F   |
   */
   pub trait PpuRegister {
-
+    fn read<P: PaletteRam>(&mut self, addr: Addr, ctx: &mut PpuCtx<P>) -> Data;
+    fn write<P: PaletteRam>(&mut self, addr: Addr, ddata: Data, ctx: &mut PpuCtx<P>);
+    fn clear_vblank(&mut self);
+    fn clear_sprite_hit(&mut self);
+    fn get_ppu_addr_increment_value(&self) -> usize;
   }
 
 impl Register {
@@ -57,6 +63,83 @@ impl Register {
       ppu_addr: PpuAddr::new(),
       ppu_data: PpuData::new(),
       ppu_scroll: PpuScroll::new(),
+    }
+  }
+
+  fn read_status(&mut self) -> Data {
+    let data = self.ppu_status;
+    self.ppu_scroll.enable_x();
+    self.clear_vblank();
+    self.clear_sprite_hit();
+    self.ppu_addr.reset_latch();
+    data
+  }
+
+  fn write_oam_addr(&mut self, data: Data) {
+    self.oam.write_addr(data)
+  }
+
+  fn write_oam_data(&mut self, data: Data, oam_ram: &mut Ram) {
+    self.oam.write_data(oam_ram, data)
+  }
+
+  fn write_ppu_addr(&mut self, data: Data) {
+    self.ppu_addr.write(data)
+  }
+
+  fn read_ppu_data<P: PaletteRam>(&mut self, vram: &Ram, cram: &Ram, palette: &P) -> Data {
+    let addr = self.ppu_addr.get();
+    let data = self.ppu_data.read(vram, cram,addr, palette);
+    let v = self.get_ppu_addr_increment_value() as u16;
+    self.ppu_addr.update(v);
+    data
+  }
+
+  fn write_ppu_data<P: PaletteRam>(&mut self, data: Data, vram: &mut Ram, cram: &mut Ram, palette: &mut P){
+    let addr = self.ppu_addr.get();
+    self.ppu_data.write(vram, cram, addr ,data, palette);
+    let v = self.get_ppu_addr_increment_value() as u16;
+    self.ppu_addr.update(v);
+  }
+}
+
+impl PpuRegister for Register {
+
+  fn read<P: PaletteRam>(&mut self, addr: Addr, ctx: &mut PpuCtx<P>) -> Data{
+    match addr {
+      0x0002 => self.read_status(),
+      0x0004 => self.oam.read_data(&ctx.oam_ram),
+      0x0007 => self.read_ppu_data(&ctx.vram, &ctx.cram, &ctx.palette),
+      _ => 0,
+    }
+  }
+
+  fn write<P: PaletteRam>(&mut self, addr: Addr, data: Data, ctx: &mut PpuCtx<P>) {
+    match addr {
+      0x0000 => self.ppu_ctrl1 = data,
+      0x0001 => self.ppu_ctrl2 = data,
+      0x0003 => self.write_oam_addr(data),
+      0x0004 => self.write_oam_data(data, &mut ctx.oam_ram),
+      0x0005 => self.ppu_scroll.write(data),
+      0x0006 => self.write_ppu_addr(data),
+      0x0007 => self.write_ppu_data(data, &mut ctx.vram, &mut ctx.cram, &mut ctx.palette),
+      _ => (),
+    }
+  }
+
+  fn clear_vblank(&mut self) {
+    self.ppu_status &= 0x7F
+  }
+
+  fn clear_sprite_hit(&mut self) {
+
+  }
+
+  fn get_ppu_addr_increment_value(&self) -> usize {
+    if self.ppu_ctrl1 & 0x04 == 0x04 {
+      32
+    } else {
+      1
     }
   }
 }
