@@ -1,4 +1,5 @@
 mod register;
+mod background;
 mod palette;
 mod sprite;
 mod sprite_utils;
