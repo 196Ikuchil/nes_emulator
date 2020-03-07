@@ -1,4 +1,5 @@
 mod bus;
+mod cassette_paser;
 mod cpu;
 mod cpu_register;
 mod dma;
