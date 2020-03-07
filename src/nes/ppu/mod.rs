@@ -1,6 +1,7 @@
 mod register;
 mod palette;
 mod sprite_utils;
+mod tile;
 
 use self::register::*;
 use self::palette::*;
