@@ -12,7 +12,7 @@ use super::super::Ram;
 use super::palette::*;
 use super::PpuCtx;
 
-
+#[derive(Debug)]
 pub struct Register {
   pub ppu_ctrl1: Data,
   pub ppu_ctrl2: Data,
@@ -50,7 +50,18 @@ pub struct Register {
     fn write<P: PaletteRam>(&mut self, addr: Addr, ddata: Data, ctx: &mut PpuCtx<P>);
     fn clear_vblank(&mut self);
     fn clear_sprite_hit(&mut self);
+    fn set_vblank(&mut self);
+    fn set_sprite_hit(&mut self);
+    fn is_sprite_enable(&self) -> bool;
+    fn is_background_enable(&self) -> bool;
+    fn is_irq_enable(&self) -> bool;
+    fn is_sprite_8x8(&self) -> bool;
     fn get_ppu_addr_increment_value(&self) -> usize;
+    fn get_background_table_offset(&self) -> Addr;
+    fn get_name_table_id(&self) -> Data;
+    fn get_sprite_table_offset(&self) -> Addr;
+    fn get_scroll_x(&self) -> Data;
+    fn get_scroll_y(&self) -> Data;
   }
 
 impl Register {
@@ -132,7 +143,31 @@ impl PpuRegister for Register {
   }
 
   fn clear_sprite_hit(&mut self) {
+    self.ppu_status &= 0x40
+  }
 
+  fn set_vblank(&mut self) {
+    self.ppu_status |= 0x80;
+  }
+
+  fn set_sprite_hit(&mut self) {
+    self.ppu_status |= 0x40
+  }
+
+  fn is_background_enable(&self) -> bool {
+    self.ppu_ctrl2 & 0x80 == 0x80
+  }
+
+  fn is_sprite_enable(&self) -> bool {
+    self.ppu_ctrl2 & 0x10 == 0x10
+  }
+
+  fn is_irq_enable(&self) -> bool {
+    self.ppu_ctrl1 & 0x80 == 0x80
+  }
+
+  fn is_sprite_8x8(&self) -> bool {
+    self.ppu_ctrl1 & 0x20 != 0x20
   }
 
   fn get_ppu_addr_increment_value(&self) -> usize {
@@ -141,5 +176,33 @@ impl PpuRegister for Register {
     } else {
       1
     }
+  }
+
+  fn get_background_table_offset(&self) -> Addr{
+    if self.ppu_ctrl1 & 0x10 == 0x10 {
+      0x1000
+    } else {
+      0x0000
+    }
+  }
+
+  fn get_name_table_id(&self) -> Data {
+    self.ppu_ctrl1 & 0x03
+  }
+
+  fn get_sprite_table_offset(&self) -> Addr {
+    if self.ppu_ctrl1 & 0x08 == 0x08 {
+      0x1000
+    } else {
+      0x0000
+    }
+  }
+
+  fn get_scroll_x(&self) -> Data {
+    self.ppu_scroll.get_x()
+  }
+
+  fn get_scroll_y(&self) -> Data {
+    self.ppu_scroll.get_y()
   }
 }
