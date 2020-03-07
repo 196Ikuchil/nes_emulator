@@ -6,10 +6,12 @@ mod dma;
 mod types;
 mod helper;
 mod ram;
+mod rom;
 mod ppu;
 
 use self::bus::cpu_bus;
 use self::ram::Ram;
+use self::rom::Rom;
 use self::ppu::*;
 use self::dma::*;
 use self::types::{Data, Addr, Word};
@@ -18,8 +20,9 @@ const DMA_CYCLES: u16 = 514;
 
 #[derive(Debug)]
 pub struct Context {
-  ppu: Ppu,
   work_ram: Ram,
+  ppu: Ppu,
+  program_rom: Rom,
   cpu_register: cpu_register::Register,
   dma: Dma,
   nmi: bool,
@@ -27,6 +30,7 @@ pub struct Context {
 
 pub fn reset(ctx: &mut Context) {
   let mut cpu_bus = cpu_bus::Bus::new(
+    &ctx.program_rom,
     &mut ctx.work_ram,
     &mut ctx.ppu,
     &mut ctx.dma,
@@ -41,6 +45,7 @@ pub fn run(ctx: &mut Context){
       DMA_CYCLES
     } else {
       let mut cpu_bus = cpu_bus::Bus::new(
+        &ctx.program_rom,
         &mut ctx.work_ram,
         &mut ctx.ppu,
         &mut ctx.dma,
@@ -58,6 +63,21 @@ pub fn run(ctx: &mut Context){
   }
 }
 
-pub fn debug_run(){
-
+impl Context {
+  pub fn new(buf: &mut [Data]) -> Self {
+    let cassette = cassette_paser::parse(buf);
+    Context {
+      cpu_register: cpu_register::Register::new(),
+      program_rom: Rom::new(cassette.program_rom),
+      ppu: Ppu::new(
+        cassette.character_ram,
+        PpuConfig {
+          is_horizontal_mirror: cassette.is_horizontal_mirror,
+        },
+      ),
+      work_ram: Ram::new(vec![0;0x0800]),
+      dma: Dma::new(),
+      nmi: false,
+    }
+  }
 }
