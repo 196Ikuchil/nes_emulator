@@ -1,6 +1,7 @@
 mod bus;
 mod cpu;
 mod cpu_register;
+mod dma;
 mod types;
 mod helper;
 mod ram;
