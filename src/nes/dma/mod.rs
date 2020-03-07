@@ -21,7 +21,7 @@ impl Dma {
     self.should_run = true;
   }
 
-  pub fn Is_should_run(&self) -> bool {
+  pub fn is_should_run(&self) -> bool {
     self.should_run
   }
 
