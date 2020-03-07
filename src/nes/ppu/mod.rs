@@ -1,5 +1,6 @@
 mod register;
 mod palette;
+mod sprite;
 mod sprite_utils;
 mod tile;
 
