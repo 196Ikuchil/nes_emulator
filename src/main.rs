@@ -6,5 +6,4 @@ mod nes;
 
 fn main() {
     println!("Hello, world!");
-    nes::debug_run();
 }

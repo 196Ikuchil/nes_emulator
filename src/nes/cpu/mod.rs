@@ -16,7 +16,7 @@ pub fn reset<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   register.set_PC(addr);
 }
 
-pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &mut bool) {
+pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &mut bool) -> Data {
 
   if *_nmi {
     nmi(register, cpu_bus);
@@ -106,6 +106,7 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &
     Instruction::NOP => (),
     _ => panic!("Invalid code"),
   }
+  code.cycle
 }
 
 #[cfg(test)]

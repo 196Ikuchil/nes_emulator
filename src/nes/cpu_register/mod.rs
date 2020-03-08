@@ -1,6 +1,7 @@
 use super::helper::*;
 use super::types::{Data, Addr, Word};
 
+#[derive(Debug)]
 struct Status {
   negative: bool,
   overflow: bool,
@@ -13,6 +14,7 @@ struct Status {
 }
 
 #[allow(non_snake_case)]
+#[derive(Debug)]
 pub struct Register {
   A: Data, // accumelator
   X: Data, // index register
