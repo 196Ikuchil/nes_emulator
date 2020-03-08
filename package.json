@@ -1,0 +1,19 @@
+{
+  "name": "nes_emulator",
+  "version": "1.0.0",
+  "description": "NES's rusty emulation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/196Ikuchil/nes_emulator.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/196Ikuchil/nes_emulator/issues"
+  },
+  "homepage": "https://github.com/196Ikuchil/nes_emulator#readme"
+}
