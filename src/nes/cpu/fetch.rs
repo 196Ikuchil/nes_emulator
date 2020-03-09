@@ -31,10 +31,11 @@ pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T
 
 fn fetch_relative<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
   let base = fetch(register, bus) as Addr;
-  let dest = (base as i32) + (register.get_PC() as i32);
-  debug_assert!(dest >= 0x0);
-  debug_assert!(dest < 0x10000);
-  dest as Addr
+  if base < 0x80 {
+      base + register.get_PC()
+  } else {
+      base + register.get_PC() - 256
+  }
 }
 
 fn fetch_zeropage_x<T: CpuRegister,U: CpuBus>(register: &mut T, bus: &mut U) -> Data {
@@ -67,8 +68,8 @@ fn fetch_indirect_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) ->
 
 fn fetch_indirect_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
   let addr = fetch(register, bus) as Addr;
-  let top = bus.read(addr) as Word;
-  let low = bus.read(addr + 1) as Word;
+  let low = bus.read(addr) as Word;
+  let top = bus.read(addr + 1) as Word;
   ((top << 8) | low) + (register.get_Y() as Word)
 }
 
@@ -203,8 +204,8 @@ mod test {
     r.set_PC(0x80);
     r.set_Y(0x01);
     b.memory[0x80] = 0x10;
-    b.memory[0x10] = 0xFF;
-    b.memory[0x11] = 0xEE;
+    b.memory[0x10] = 0xEE;
+    b.memory[0x11] = 0xFF;
     let addr = fetch_indirect_y(&mut r, &mut b);
     assert_eq!(addr, 0xFFEF);
   }
