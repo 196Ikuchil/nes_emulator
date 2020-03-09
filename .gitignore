@@ -11,3 +11,8 @@ Cargo.lock
 
 # built
 /wasm/
+
+# node
+/node_modules/
+
+.DS_Store
