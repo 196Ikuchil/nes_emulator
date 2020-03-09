@@ -355,6 +355,9 @@ lazy_static! {
     m.insert(0x7B, Opecode { name: Instruction::RRA, mode: Addressing::AbsoluteY, cycle:7 });
     m.insert(0x63, Opecode { name: Instruction::RRA, mode: Addressing::IndirectX, cycle: 8 });
     m.insert(0x73, Opecode { name: Instruction::RRA, mode: Addressing::IndirectY, cycle: 8});
+
+    // nestest
+    m.insert(0xEB, Opecode { name: Instruction::SBC, mode: Addressing::Immediate, cycle: 2 });
     m
   };
 }
