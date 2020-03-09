@@ -95,7 +95,7 @@ impl Ppu {
         is_background_enable: self.register.is_background_enable(),
       };
       // target line edge on display area
-      let tile_x = ((scroll_y as usize + (self.register.get_name_table_id() % 2) as usize * 256) / 8) as Data;
+      let tile_x = ((scroll_x as usize + (self.register.get_name_table_id() % 2) as usize * 256) / 8) as Data;
       let tile_y = self.get_scroll_tile_y();
       self.background.build_line(
         &self.ctx.vram,
