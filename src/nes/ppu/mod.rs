@@ -95,7 +95,7 @@ impl Ppu {
         is_background_enable: self.register.is_background_enable(),
       };
       // target line edge on display area
-      let tile_x = ((scroll_y as usize + (self.register.get_name_table_id() % 2) as usize * 256) / 8) as Data;
+      let tile_x = ((scroll_x as usize + (self.register.get_name_table_id() % 2) as usize * 256) / 8) as Data;
       let tile_y = self.get_scroll_tile_y();
       self.background.build_line(
         &self.ctx.vram,
@@ -141,11 +141,11 @@ impl Ppu {
   }
 
   fn get_scroll_tile_y(&self) -> Data {
-    (self.register.get_scroll_y() as usize
-      + self.line
-      + ((self.register.get_name_table_id() / 2) as usize * 240)
-      / 8 ) as Data
-  }
+    ((self.register.get_scroll_y() as usize
+        + self.line
+        + ((self.register.get_name_table_id() / 2) as usize * 240))
+        / 8) as Data
+}
 
   // sprite 0 hit
   fn has_sprite_hit(&self, cycle: usize) -> bool {

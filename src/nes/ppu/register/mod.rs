@@ -155,7 +155,7 @@ impl PpuRegister for Register {
   }
 
   fn is_background_enable(&self) -> bool {
-    self.ppu_ctrl2 & 0x80 == 0x80
+    self.ppu_ctrl2 & 0x08 == 0x08
   }
 
   fn is_sprite_enable(&self) -> bool {
