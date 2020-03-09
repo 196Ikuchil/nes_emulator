@@ -23,6 +23,7 @@ pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T
     Addressing::Absolute => fetch_absolute(register, bus),
     Addressing::AbsoluteX => fetch_absolute_x(register, bus),
     Addressing::AbsoluteY => fetch_absolute_y(register, bus),
+    Addressing::AbsoluteIndirect => fetch_absolute_indirect(register, bus),
     Addressing::IndirectX => fetch_indirect_x(register, bus),
     Addressing::IndirectY => fetch_indirect_y(register, bus),
     _ => panic!("Invalid code"),
@@ -59,6 +60,12 @@ fn fetch_absolute_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) ->
 
 fn fetch_absolute_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
   fetch_absolute(register, bus) + (register.get_Y() as Word)
+}
+
+fn fetch_absolute_indirect<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
+  let addr = fetch_absolute(register, bus);
+  let upper = bus.read((addr & 0xFF00) | ((((addr & 0xFF) + 1) & 0xFF)) as Addr) as Addr;
+  (bus.read(addr) as Addr) + (upper << 8) as Addr
 }
 
 fn fetch_indirect_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
