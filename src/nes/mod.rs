@@ -8,7 +8,9 @@ mod helper;
 mod ram;
 mod rom;
 mod ppu;
+mod renderer;
 
+pub use self::renderer::*;
 use self::bus::cpu_bus;
 use self::ram::Ram;
 use self::rom::Rom;
@@ -26,6 +28,7 @@ pub struct Context {
   cpu_register: cpu_register::Register,
   dma: Dma,
   nmi: bool,
+  renderer: Renderer,
 }
 
 pub fn reset(ctx: &mut Context) {
@@ -56,7 +59,7 @@ pub fn run(ctx: &mut Context){
     let is_ready = ctx.ppu.run((cycle * 3) as usize, &mut ctx.nmi);
     if is_ready {
       if ctx.ppu.background.0.len() != 0 {
-        // ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites);
+        ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites);
       }
       break;
     }
@@ -78,6 +81,7 @@ impl Context {
       work_ram: Ram::new(vec![0;0x0800]),
       dma: Dma::new(),
       nmi: false,
+      renderer: Renderer::new(),
     }
   }
 }
