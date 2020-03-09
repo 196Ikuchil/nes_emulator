@@ -73,6 +73,15 @@ pub enum Instruction {
   // others
   BRK,
   NOP,
+  // undocumented
+  LAX,
+  SAX,
+  DCP,
+  ISB,
+  SLO,
+  RLA,
+  SRE,
+  RRA,
 }
 
 #[derive(Debug, PartialEq)]
@@ -253,6 +262,59 @@ lazy_static! {
     // others
     m.insert(0x00, Opecode{ name: Instruction::BRK, mode: Addressing::Implied, cycle: 7});
     m.insert(0xEA, Opecode{ name: Instruction::NOP, mode: Addressing::Implied, cycle: 2});
+    // undocumented
+    m.insert(0xA7, Opecode { name: Instruction::LAX, mode: Addressing::Zeropage, cycle: 2 });
+    m.insert(0xB7, Opecode { name: Instruction::LAX, mode: Addressing::ZeropageY, cycle: 3 });
+    m.insert(0xAF, Opecode { name: Instruction::LAX, mode: Addressing::Absolute, cycle: 4 });
+    m.insert(0xBF, Opecode { name: Instruction::LAX, mode: Addressing::AbsoluteY, cycle: 4 });
+    m.insert(0xA3, Opecode { name: Instruction::LAX, mode: Addressing::IndirectX, cycle: 4 });
+    m.insert(0xB3, Opecode { name: Instruction::LAX, mode: Addressing::IndirectY, cycle:5 });
+    m.insert(0x87, Opecode { name: Instruction::SAX, mode: Addressing::Zeropage, cycle: 3});
+    m.insert(0x97, Opecode { name: Instruction::SAX, mode: Addressing::ZeropageY, cycle: 4});
+    m.insert(0x8F, Opecode { name: Instruction::SAX, mode: Addressing::Absolute, cycle: 4 });
+    m.insert(0x83, Opecode { name: Instruction::SAX, mode: Addressing::IndirectX, cycle:6 });
+    m.insert(0xC7, Opecode { name: Instruction::DCP, mode: Addressing::Zeropage, cycle: 5 });
+    m.insert(0xD7, Opecode { name: Instruction::DCP, mode: Addressing::ZeropageX, cycle: 6 });
+    m.insert(0xCF, Opecode { name: Instruction::DCP, mode: Addressing::Absolute, cycle: 6 });
+    m.insert(0xDF, Opecode { name: Instruction::DCP, mode: Addressing::AbsoluteX, cycle: 7 });
+    m.insert(0xDB, Opecode { name: Instruction::DCP, mode: Addressing::AbsoluteY, cycle:2 });
+    m.insert(0xC3, Opecode { name: Instruction::DCP, mode: Addressing::IndirectX, cycle: 8 });
+    m.insert(0xD3, Opecode { name: Instruction::DCP, mode: Addressing::IndirectY, cycle: 8 });
+    m.insert(0xE7, Opecode { name: Instruction::ISB, mode: Addressing::Zeropage, cycle: 5 });
+    m.insert(0xF7, Opecode { name: Instruction::ISB, mode: Addressing::ZeropageX, cycle:6 });
+    m.insert(0xEF, Opecode { name: Instruction::ISB, mode: Addressing::Absolute, cycle: 6 });
+    m.insert(0xFF, Opecode { name: Instruction::ISB, mode: Addressing::AbsoluteX, cycle: 7 });
+    m.insert(0xFB, Opecode { name: Instruction::ISB, mode: Addressing::AbsoluteY, cycle: 2 });
+    m.insert(0xE3, Opecode { name: Instruction::ISB, mode: Addressing::IndirectX, cycle: 8});
+    m.insert(0xF3, Opecode { name: Instruction::ISB, mode: Addressing::IndirectY, cycle: 8});
+    m.insert(0x07, Opecode { name: Instruction::SLO, mode: Addressing::Zeropage, cycle: 5 });
+    m.insert(0x17, Opecode { name: Instruction::SLO, mode: Addressing::ZeropageX, cycle: 6 });
+    m.insert(0x0F, Opecode { name: Instruction::SLO, mode: Addressing::Absolute, cycle: 6 });
+    m.insert(0x1F, Opecode { name: Instruction::SLO, mode: Addressing::AbsoluteX, cycle:7 });
+    m.insert(0x1B, Opecode { name: Instruction::SLO, mode: Addressing::AbsoluteY, cycle: 7 });
+    m.insert(0x03, Opecode { name: Instruction::SLO, mode: Addressing::IndirectX, cycle: 8});
+    m.insert(0x13, Opecode { name: Instruction::SLO, mode: Addressing::IndirectY, cycle: 8 });
+    m.insert(0x27, Opecode { name: Instruction::RLA, mode: Addressing::Zeropage, cycle: 5 });
+    m.insert(0x37, Opecode { name: Instruction::RLA, mode: Addressing::ZeropageX, cycle: 6 });
+    m.insert(0x2F, Opecode { name: Instruction::RLA, mode: Addressing::Absolute, cycle:6});
+    m.insert(0x3F, Opecode { name: Instruction::RLA, mode: Addressing::AbsoluteX, cycle:7});
+    m.insert(0x3B, Opecode { name: Instruction::RLA, mode: Addressing::AbsoluteY, cycle: 7 });
+    m.insert(0x23, Opecode { name: Instruction::RLA, mode: Addressing::IndirectX, cycle: 8 });
+    m.insert(0x33, Opecode { name: Instruction::RLA, mode: Addressing::IndirectY, cycle: 8 }, );
+    m.insert(0x47, Opecode { name: Instruction::SRE, mode: Addressing::Zeropage, cycle: 5});
+    m.insert(0x57, Opecode { name: Instruction::SRE, mode: Addressing::ZeropageX, cycle: 6 });
+    m.insert(0x4F, Opecode { name: Instruction::SRE, mode: Addressing::Absolute, cycle: 6 });
+    m.insert(0x5F, Opecode { name: Instruction::SRE, mode: Addressing::AbsoluteX, cycle:7 });
+    m.insert(0x5B, Opecode { name: Instruction::SRE, mode: Addressing::AbsoluteY, cycle:7});
+    m.insert(0x43, Opecode { name: Instruction::SRE, mode: Addressing::IndirectX, cycle: 8 });
+    m.insert(0x53, Opecode { name: Instruction::SRE, mode: Addressing::IndirectY, cycle: 8 }, );
+    m.insert(0x67, Opecode { name: Instruction::RRA, mode: Addressing::Zeropage, cycle: 5});
+    m.insert(0x77, Opecode { name: Instruction::RRA, mode: Addressing::ZeropageX, cycle: 6});
+    m.insert(0x6F, Opecode { name: Instruction::RRA, mode: Addressing::Absolute, cycle: 6 });
+    m.insert(0x7F, Opecode { name: Instruction::RRA, mode: Addressing::AbsoluteX, cycle: 7 });
+    m.insert(0x7B, Opecode { name: Instruction::RRA, mode: Addressing::AbsoluteY, cycle:7 });
+    m.insert(0x63, Opecode { name: Instruction::RRA, mode: Addressing::IndirectX, cycle: 8 });
+    m.insert(0x73, Opecode { name: Instruction::RRA, mode: Addressing::IndirectY, cycle: 8});
     m
   };
 }

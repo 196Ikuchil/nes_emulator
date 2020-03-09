@@ -104,7 +104,14 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &
 
     Instruction::BRK => brk(register, cpu_bus),
     Instruction::NOP => (),
-    _ => panic!("Invalid code"),
+    Instruction::LAX => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::SAX => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::DCP => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::ISB => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::SLO => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::RLA => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::SRE => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::RRA => println!("{}", "TODO:Undocumented instruction"),
   }
   code.cycle
 }
