@@ -104,9 +104,7 @@ pub fn txa<T: CpuRegister>(register: &mut T) {
 pub fn txs<T: CpuRegister>(register: &mut T) {
   let v = register.get_X();
   register
-    .set_S(v)
-    .update_status_negative_by(v)
-    .update_status_zero_by(v);
+    .set_S(v);
 }
 
 pub fn tya<T: CpuRegister>(register: &mut T) {
