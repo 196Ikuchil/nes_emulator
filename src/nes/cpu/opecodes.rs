@@ -262,6 +262,46 @@ lazy_static! {
     // others
     m.insert(0x00, Opecode{ name: Instruction::BRK, mode: Addressing::Implied, cycle: 7});
     m.insert(0xEA, Opecode{ name: Instruction::NOP, mode: Addressing::Implied, cycle: 2});
+    m.insert(0x1A, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x3A, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x5A, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x7A, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0xDA, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0xFA, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x02, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x12, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x22, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x32, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x42, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x52, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x62, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x72, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x92, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0xB2, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0xD2, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0xF2, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x80, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x82, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0x89, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0xC2, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 2 });
+    m.insert(0xE2, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 3 });
+    m.insert(0x04, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 3 });
+    m.insert(0x44, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 3 });
+    m.insert(0x64, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 3 });
+    m.insert(0x14, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x34, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x54, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x74, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0xD4, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0xF4, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x0C, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x1C, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x3C, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x5C, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0x7C, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0xDC, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+    m.insert(0xFC, Opecode { name: Instruction::NOP, mode: Addressing::Implied, cycle: 4 });
+
     // undocumented
     m.insert(0xA7, Opecode { name: Instruction::LAX, mode: Addressing::Zeropage, cycle: 2 });
     m.insert(0xB7, Opecode { name: Instruction::LAX, mode: Addressing::ZeropageY, cycle: 3 });
