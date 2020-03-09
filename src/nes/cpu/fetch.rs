@@ -62,8 +62,8 @@ fn fetch_absolute_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) ->
 }
 
 fn fetch_indirect_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
-  let addr = (fetch(register, bus) + register.get_X()) as Addr;
-  (bus.read(addr) as Addr) + ((bus.read(addr+1) as Addr) << 8)
+  let addr = ((fetch(register, bus) + register.get_X()) & 0xFF) as Addr;
+  (bus.read(addr) as Addr) + ((bus.read((addr + 1) as Addr & 0xFF) as Addr) << 8)
 }
 
 fn fetch_indirect_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
