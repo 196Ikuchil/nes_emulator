@@ -68,9 +68,8 @@ fn fetch_indirect_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) ->
 
 fn fetch_indirect_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
   let addr = fetch(register, bus) as Addr;
-  let low = bus.read(addr) as Word;
-  let top = bus.read(addr + 1) as Word;
-  ((top << 8) | low) + (register.get_Y() as Word)
+  let base_addr = (bus.read(addr) as usize) + ((bus.read((addr + 1) & 0x00FF) as usize) * 0x100);
+  (base_addr + (register.get_Y() as usize)) as Addr
 }
 
 #[cfg(test)]
