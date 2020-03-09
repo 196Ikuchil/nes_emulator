@@ -436,7 +436,7 @@ pub fn rts<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
 pub fn rti<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   pop_status(register, bus);
   pop_pc(register, bus);
-  register.increment_PC();
+  register.set_status_reserved(true);
 }
 
 pub fn bcc<T:CpuRegister>(operand: Addr, register: &mut T) {
