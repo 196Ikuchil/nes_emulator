@@ -141,11 +141,11 @@ impl Ppu {
   }
 
   fn get_scroll_tile_y(&self) -> Data {
-    (self.register.get_scroll_y() as usize
-      + self.line
-      + ((self.register.get_name_table_id() / 2) as usize * 240)
-      / 8 ) as Data
-  }
+    ((self.register.get_scroll_y() as usize
+        + self.line
+        + ((self.register.get_name_table_id() / 2) as usize * 240))
+        / 8) as Data
+}
 
   // sprite 0 hit
   fn has_sprite_hit(&self, cycle: usize) -> bool {
