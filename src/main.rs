@@ -17,8 +17,8 @@ pub fn run(len: usize, ptr: *mut u8) {
   nes::reset(&mut ctx);
   externs::cancel_main_loop();
   let main_loop = || {
-    // let key_state = buf[len -1];
-    nes::run(&mut ctx);
+    let key_state = buf[len -1];
+    nes::run(&mut ctx, key_state);
   };
   externs::set_main_loop_callback(main_loop);
 }

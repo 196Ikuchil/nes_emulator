@@ -1,6 +1,38 @@
 
 let buf = null
 
+const convertKeyCode = (key) => {
+  switch (key) {
+    case 88: return 0x01 // X A
+    case 90: return 0x02 // Z B
+    case 65: return 0x04 // A SELECT
+    case 83: return 0x08 // S START
+    case 38: return 0x10 // up up
+    case 40: return 0x20 // down down
+    case 37: return 0x40 // L L
+    case 39: return 0x39 // R R
+  }
+}
+
+const onKeydown = (e) => {
+  if (buf != null)
+    buf[buf.length - 1] |= convertKeyCode(e.keyCode)
+}
+
+const onKeyup = (e) => {
+  if (buf != null)
+    buf[buf.length - 1] &= ~convertKeyCode(e.keyCode)
+}
+
+const setupKeyHandler = () => {
+  if (typeof window !== 'undefined') {
+    document.addEventListener('keydown', onKeydown)
+    document.addEventListener('keyup', onKeyup)
+  }
+}
+
+setupKeyHandler()
+
 // launch nes
 const startArrayBuf = (arrayBuf) => {
   const run = Module.cwrap('run', null, ['number', 'number'])
