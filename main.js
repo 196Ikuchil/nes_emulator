@@ -26,7 +26,7 @@ const startArrayBuf = (arrayBuf) => {
 }
 
 // called from html
-export const start = async (rom = './roms/sample1.nes') => {
+export const start = async (rom = './roms/nestest.nes') => {
   const res = await fetch(rom);
   const arrayBuf = await res.arrayBuffer();
   startArrayBuf(arrayBuf);
