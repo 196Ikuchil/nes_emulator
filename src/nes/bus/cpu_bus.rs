@@ -62,6 +62,7 @@ impl<'a> CpuBus for Bus<'a> {
       0x0000..=0x1FFF => self.work_ram.write(addr & 0x07FF, data),
       0x2000..=0x3FFF => self.ppu.write(addr - 0x2000, data),
       0x4014 => self.dma.write(data),
+      0x4000..=0x401F => (), // TODO: apu
       0x6000..=0x7FFF => {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
       }
