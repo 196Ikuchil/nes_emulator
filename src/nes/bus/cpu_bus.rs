@@ -44,6 +44,9 @@ impl<'a> CpuBus for Bus<'a> {
     match addr {
       0x0000..=0x1FFF => self.work_ram.read(addr & 0x07FF),
       0x2000..=0x3FFF => self.ppu.read(addr - 0x2000),
+      0x4016 => 0, // TODO: keypad
+      0x4017 => 0, // TODO: 2player
+      0x4000...0x401F => 0, // TODO: apu
       0x6000..=0x7FFF => {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
         0
