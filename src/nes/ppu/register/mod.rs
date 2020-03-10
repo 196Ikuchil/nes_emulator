@@ -143,7 +143,7 @@ impl PpuRegister for Register {
   }
 
   fn clear_sprite_hit(&mut self) {
-    self.ppu_status &= 0x40
+    self.ppu_status &= 0xbF
   }
 
   fn set_vblank(&mut self) {
