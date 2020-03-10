@@ -104,9 +104,7 @@ pub fn txa<T: CpuRegister>(register: &mut T) {
 pub fn txs<T: CpuRegister>(register: &mut T) {
   let v = register.get_X();
   register
-    .set_S(v)
-    .update_status_negative_by(v)
-    .update_status_zero_by(v);
+    .set_S(v);
 }
 
 pub fn tya<T: CpuRegister>(register: &mut T) {
@@ -161,21 +159,23 @@ pub fn and<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut
 }
 
 pub fn asl_acc<T: CpuRegister>(register: &mut T) {
-  let a = register.get_A() << 1;
+  let a = register.get_A();
+  let shifted = (a << 1) as Data;
   register
     .set_status_carry((a & 0x80) == 0x80)
-    .update_status_negative_by(a)
-    .update_status_zero_by(a)
-    .set_A(a);
+    .update_status_negative_by(shifted)
+    .update_status_zero_by(shifted)
+    .set_A(shifted);
 }
 
 pub fn asl<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
-  let fetched = bus.read(operand) << 1;
+  let fetched = bus.read(operand);
+  let shifted = fetched << 1;
   register
     .set_status_carry((fetched & 0x80) == 0x80)
-    .update_status_negative_by(fetched)
-    .update_status_zero_by(fetched);
-  bus.write(operand, fetched);
+    .update_status_negative_by(shifted)
+    .update_status_zero_by(shifted);
+  bus.write(operand, shifted);
 }
 
 pub fn bit<T: CpuRegister, U: CpuBus>(operand: Word, register: &mut T, bus: &mut U) {
@@ -438,7 +438,7 @@ pub fn rts<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
 pub fn rti<T:CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   pop_status(register, bus);
   pop_pc(register, bus);
-  register.increment_PC();
+  register.set_status_reserved(true);
 }
 
 pub fn bcc<T:CpuRegister>(operand: Addr, register: &mut T) {
