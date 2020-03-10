@@ -5,12 +5,14 @@ mod cpu_register;
 mod dma;
 mod types;
 mod helper;
+mod keypad;
 mod ram;
 mod rom;
 mod ppu;
 mod renderer;
 
 pub use self::renderer::*;
+pub use self::keypad::*;
 use self::bus::cpu_bus;
 use self::ram::Ram;
 use self::rom::Rom;
@@ -29,6 +31,7 @@ pub struct Context {
   dma: Dma,
   nmi: bool,
   renderer: Renderer,
+  keypad: Keypad,
 }
 
 pub fn reset(ctx: &mut Context) {
@@ -37,11 +40,13 @@ pub fn reset(ctx: &mut Context) {
     &mut ctx.work_ram,
     &mut ctx.ppu,
     &mut ctx.dma,
+    &mut ctx.keypad,
   );
   cpu::reset(&mut ctx.cpu_register, &mut cpu_bus);
 }
 
-pub fn run(ctx: &mut Context){
+pub fn run(ctx: &mut Context, key_state: Data){
+  ctx.keypad.update(key_state);
   loop {
     let cycle: Word = if ctx.dma.is_should_run() {
       ctx.dma.run(&ctx.work_ram, &mut ctx.ppu);
@@ -52,6 +57,7 @@ pub fn run(ctx: &mut Context){
         &mut ctx.work_ram,
         &mut ctx.ppu,
         &mut ctx.dma,
+        &mut ctx.keypad,
       );
       cpu::run(&mut ctx.cpu_register, &mut cpu_bus, &mut ctx.nmi) as Word
     };
@@ -82,6 +88,7 @@ impl Context {
       dma: Dma::new(),
       nmi: false,
       renderer: Renderer::new(),
+      keypad: Keypad::new(),
     }
   }
 }
