@@ -1,4 +1,5 @@
 use super::super::types::{Data, Addr, Word};
+use super::super::apu::Apu;
 use super::super::dma::Dma;
 use super::super::ppu::Ppu;
 use super::super::ram::Ram;
@@ -6,6 +7,7 @@ use super::super::rom::Rom;
 use super::super::keypad::Keypad;
 
 pub struct Bus<'a> {
+  apu: &'a mut Apu,
   program_rom: &'a Rom,
   work_ram: &'a mut Ram,
   ppu: &'a mut Ppu,
@@ -21,6 +23,7 @@ pub trait CpuBus {
 
 impl<'a> Bus<'a> {
   pub fn new(
+    apu: &'a mut Apu,
     program_rom: &'a Rom,
     work_ram: &'a mut Ram,
     ppu: &'a mut Ppu,
@@ -28,6 +31,7 @@ impl<'a> Bus<'a> {
     keypad: &'a mut Keypad,
   ) -> Bus<'a> {
     Self {
+      apu,
       program_rom,
       work_ram,
       ppu,
@@ -50,7 +54,7 @@ impl<'a> CpuBus for Bus<'a> {
       0x2000..=0x3FFF => self.ppu.read(addr - 0x2000),
       0x4016 => self.keypad.read(),
       0x4017 => 0, // TODO: 2player
-      0x4000...0x401F => 0, // TODO: apu
+      0x4000..=0x401F => self.apu.read(addr - 0x4000),
       0x6000..=0x7FFF => {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
         0
@@ -70,7 +74,7 @@ impl<'a> CpuBus for Bus<'a> {
       0x2000..=0x3FFF => self.ppu.write(addr - 0x2000, data),
       0x4014 => self.dma.write(data),
       0x4016 => self.keypad.write(data),
-      0x4000..=0x401F => (), // TODO: apu
+      0x4000..=0x401F => self.apu.write(addr - 0x4000, data),
       0x6000..=0x7FFF => {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
       }

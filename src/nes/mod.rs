@@ -1,3 +1,4 @@
+mod apu;
 mod bus;
 mod cassette_paser;
 mod cpu;
@@ -11,6 +12,7 @@ mod rom;
 mod ppu;
 mod renderer;
 
+pub use self::apu::*;
 pub use self::renderer::*;
 pub use self::keypad::*;
 use self::bus::cpu_bus;
@@ -18,12 +20,13 @@ use self::ram::Ram;
 use self::rom::Rom;
 use self::ppu::*;
 use self::dma::*;
-use self::types::{Data, Addr, Word};
+pub use self::types::{Data, Addr, Word};
 
 const DMA_CYCLES: u16 = 514;
 
 #[derive(Debug)]
 pub struct Context {
+  apu: Apu,
   work_ram: Ram,
   ppu: Ppu,
   program_rom: Rom,
@@ -36,6 +39,7 @@ pub struct Context {
 
 pub fn reset(ctx: &mut Context) {
   let mut cpu_bus = cpu_bus::Bus::new(
+    &mut ctx.apu,
     &ctx.program_rom,
     &mut ctx.work_ram,
     &mut ctx.ppu,
@@ -53,6 +57,7 @@ pub fn run(ctx: &mut Context, key_state: Data){
       DMA_CYCLES
     } else {
       let mut cpu_bus = cpu_bus::Bus::new(
+        &mut ctx.apu,
         &ctx.program_rom,
         &mut ctx.work_ram,
         &mut ctx.ppu,
@@ -61,7 +66,7 @@ pub fn run(ctx: &mut Context, key_state: Data){
       );
       cpu::run(&mut ctx.cpu_register, &mut cpu_bus, &mut ctx.nmi) as Word
     };
-
+    ctx.apu.run(cycle);
     let is_ready = ctx.ppu.run((cycle * 3) as usize, &mut ctx.nmi);
     if is_ready {
       if ctx.ppu.background.0.len() != 0 {
@@ -76,6 +81,7 @@ impl Context {
   pub fn new(buf: &mut [Data]) -> Self {
     let cassette = cassette_paser::parse(buf);
     Context {
+      apu: Apu::new(),
       cpu_register: cpu_register::Register::new(),
       program_rom: Rom::new(cassette.program_rom),
       ppu: Ppu::new(
