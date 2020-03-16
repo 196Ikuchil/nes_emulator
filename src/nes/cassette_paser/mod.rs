@@ -28,10 +28,15 @@ pub fn parse(buf: &mut [Data]) -> Cassette {
   println!("mapper type is {}", mapper);
   let character_rom_start = NES_HEADER_SIZE + program_rom_pages * PROGRAM_ROM_SIZE;
   let character_rom_end = character_rom_start + character_rom_pages * CHARACTER_ROM_SIZE;
+  let c_ram = if character_rom_start != character_rom_end {
+    buf[character_rom_start..character_rom_end].to_vec()
+  } else {
+    vec!(0;0x128)
+  };
   Cassette {
     is_horizontal_mirror,
     program_rom: buf[NES_HEADER_SIZE..character_rom_start].to_vec(),
-    character_ram: buf[character_rom_start..character_rom_end].to_vec(),
+    character_ram: c_ram,
     mapper,
   }
 }
