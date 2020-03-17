@@ -47,7 +47,7 @@ const startArrayBuf = (arrayBuf) => {
     ctx,
     canvas,
     image: ctx.createImageData(256, 240),
-    oscs: [new Oscillator(), new Oscillator()],
+    oscs: [new Oscillator(), new Oscillator(), new Oscillator('triangle')],
     noise: new Noise(),
   }
   canvas.width = 256
@@ -65,7 +65,7 @@ const startArrayBuf = (arrayBuf) => {
 }
 
 // called from html
-export const start = async (rom = './roms/apu/sweep_cutoff.nes') => {
+export const start = async (rom = './roms/apu/lin_ctr.nes') => {
   const res = await fetch(rom);
   const arrayBuf = await res.arrayBuffer();
   startArrayBuf(arrayBuf);

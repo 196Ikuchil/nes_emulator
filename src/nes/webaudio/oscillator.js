@@ -35,7 +35,6 @@ export default class Oscillator {
 
   close () {
     this.context.close()
-    console.log("close?")
   }
 
   createOscillator(options = {}) {
