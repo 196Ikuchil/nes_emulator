@@ -21,5 +21,17 @@ mergeInto(LibraryManager.library, {
   },
   set_oscillator_duty: function (index, duty) {
     Module.NES.oscs[index].setDuty(duty)
+  },
+  set_noise_frequency: function(freq) {
+    Module.NES.noise.setFrequency(freq)
+  },
+  set_noise_volume: function (volume) {
+    Module.NES.noise.setVolume(volume)
+  },
+  start_noise: function () {
+    Module.NES.noise.start()
+  },
+  stop_noise: function () {
+    Module.NES.noise.stop()
   }
 });
