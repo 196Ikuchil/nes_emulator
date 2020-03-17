@@ -1,4 +1,5 @@
-
+import Oscillator from './src/nes/webaudio/oscillator.js'
+import Noise from './src/nes/webaudio/noise.js'
 let buf = null
 
 const convertKeyCode = (key) => {
@@ -38,10 +39,16 @@ const startArrayBuf = (arrayBuf) => {
   const run = Module.cwrap('run', null, ['number', 'number'])
   const canvas = document.querySelector('canvas')
   const ctx = canvas.getContext('2d')
+  if (Module.NES) {
+    Module.NES.oscs.forEach(o => o.close())
+    Module.NES.noise.close()
+  }
   Module.NES = {
     ctx,
     canvas,
     image: ctx.createImageData(256, 240),
+    oscs: [new Oscillator(), new Oscillator(), new Oscillator('triangle')],
+    noise: new Noise(),
   }
   canvas.width = 256
   canvas.height = 240
@@ -58,7 +65,7 @@ const startArrayBuf = (arrayBuf) => {
 }
 
 // called from html
-export const start = async (rom = './roms/nestest.nes') => {
+export const start = async (rom = './roms/apu/lin_ctr.nes') => {
   const res = await fetch(rom);
   const arrayBuf = await res.arrayBuffer();
   startArrayBuf(arrayBuf);
