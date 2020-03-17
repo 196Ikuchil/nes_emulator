@@ -1,15 +1,18 @@
 mod square;
+mod triangle;
 mod noise;
 mod constants;
 
 use self::constants::*;
 use self::square::Square;
+use self::triangle::Triangle;
 use self::noise::Noise;
 use super::types::{Data, Addr};
 
 #[derive(Debug)]
 pub struct Apu {
   squares: (Square, Square),
+  triangle: Triangle,
   noise: Noise,
   cycle: u16,
   step: usize,
@@ -21,6 +24,7 @@ impl Apu {
   pub fn new() -> Self {
     Apu {
       squares: (Square::new(0), Square::new(1)),
+      triangle: Triangle::new(2),
       noise: Noise::new(),
       cycle: 0,
       step: 0,
@@ -80,6 +84,7 @@ impl Apu {
   fn update_counters(&mut self) {
     self.squares.0.update_counters();
     self.squares.1.update_counters();
+    self.triangle.update_counter();
     self.noise.update_counter();
   }
 
@@ -104,7 +109,11 @@ impl Apu {
       } else {
           0x02
       };
-      let t = 0x00; //TODO: tri
+      let t = if self.triangle.has_count_end() {
+        0x00
+      } else {
+        0x04
+      };
       let n = if self.noise.has_count_end() {
         0x00
       } else {
@@ -125,6 +134,7 @@ impl Apu {
         self.squares.1.write(addr - 0x04, data);
       }
       0x08..=0x0b => {
+        self.triangle.write(addr - 0x08, data);
       }
       0x0c..=0x0f => {
         self.noise.write(addr - 0x0c, data);
@@ -139,6 +149,11 @@ impl Apu {
           self.squares.1.enable();
         } else {
           self.squares.1.disable();
+        }
+        if data & 0x04 == 0x04 {
+          self.triangle.enable();
+        } else {
+          self.triangle.disable();
         }
         if data & 0x08 == 0x08 {
           self.noise.enable();
