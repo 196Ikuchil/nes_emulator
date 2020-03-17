@@ -1,13 +1,16 @@
 mod square;
+mod noise;
 mod constants;
 
 use self::constants::*;
 use self::square::Square;
+use self::noise::Noise;
 use super::types::{Data, Addr};
 
 #[derive(Debug)]
 pub struct Apu {
   squares: (Square, Square),
+  noise: Noise,
   cycle: u16,
   step: usize,
   sequencer_mode: bool, // t => mode 1, f => mode 0
@@ -18,6 +21,7 @@ impl Apu {
   pub fn new() -> Self {
     Apu {
       squares: (Square::new(0), Square::new(1)),
+      noise: Noise::new(),
       cycle: 0,
       step: 0,
       sequencer_mode: false,
@@ -69,13 +73,23 @@ impl Apu {
   fn update_envelope(&mut self) {
     self.squares.0.update_envelope();
     self.squares.1.update_envelope();
+    self.noise.update_envelope();
   }
 
   // generate length counter & sweep ckock
   fn update_counters(&mut self) {
     self.squares.0.update_counters();
     self.squares.1.update_counters();
+    self.noise.update_counter();
   }
+
+  // TODO:
+  // fn step_timers(&mut self) {
+  //   if cycle%2 == 0 {
+  //     self.noise.step_timer();
+  //   }
+  //   // triangle
+  // }
 
   pub fn read(&mut self, addr: Addr) -> Data {
     match addr {
@@ -90,7 +104,13 @@ impl Apu {
       } else {
           0x02
       };
-      s1 | s0
+      let t = 0x00; //TODO: tri
+      let n = if self.noise.has_count_end() {
+        0x00
+      } else {
+        0x08
+      };
+      n | t | s1 | s0
       }
     _ => 0,
     }
@@ -107,6 +127,7 @@ impl Apu {
       0x08..=0x0b => {
       }
       0x0c..=0x0f => {
+        self.noise.write(addr - 0x0c, data);
       }
       0x15 => {
         if data & 0x01 == 0x01 {
@@ -118,6 +139,11 @@ impl Apu {
           self.squares.1.enable();
         } else {
           self.squares.1.disable();
+        }
+        if data & 0x08 == 0x08 {
+          self.noise.enable();
+        } else {
+          self.noise.disable();
         }
       }
       0x17 => {
