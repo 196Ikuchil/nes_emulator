@@ -24,7 +24,7 @@ export default class Oscillator {
   }
 
   stop () {
-    if (this.stop) {
+    if (this.playing) {
       this.setVolume(0)
       this.playing = false
       this.oscillator.stop(this.context.currentTime)
