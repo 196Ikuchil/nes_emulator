@@ -78,7 +78,7 @@ impl Square {
       0x01 => {
         self.is_sweep_enabled = data & 0x80 == 0x80;
         self.sweep_unit_divider = ((data as usize >> 4) & 0x07) + 1;
-        self.is_sweep_direction_upper = data & 0x08 != 0x80;
+        self.is_sweep_direction_upper = data & 0x08 == 0x08;
         self.sweep_shift_amount = data as usize & 0x07;
       }
       0x02 => {
@@ -215,6 +215,8 @@ impl Square {
       self.envelope_volume
     } else {
       self.envelope_period_and_volume
+    } else {
+      self.envelope_volume
     };
     vol as f32 / (GROBAL_GAIN)
   }
