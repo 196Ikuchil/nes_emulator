@@ -209,10 +209,12 @@ impl Square {
   }
 
   fn get_volume(&self) -> f32 {
-    let vol = if !self.is_envelope_enabled || self.is_sweep_overflowed || self.length_counter == 0 || self.divider_frequency < 8{
-      self.envelope_period_and_volume
-    } else {
+    let vol = if !self.enabled || self.is_sweep_overflowed || self.length_counter == 0 { // || duty == 0
+      0
+    } else if self.is_envelope_enabled {
       self.envelope_volume
+    } else {
+      self.envelope_period_and_volume
     };
     vol as f32 / (GROBAL_GAIN)
   }
