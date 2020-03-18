@@ -215,8 +215,6 @@ impl Square {
       self.envelope_volume
     } else {
       self.envelope_period_and_volume
-    } else {
-      self.envelope_volume
     };
     vol as f32 / (GROBAL_GAIN)
   }
