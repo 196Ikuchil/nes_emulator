@@ -11,7 +11,7 @@ const convertKeyCode = (key) => {
     case 38: return 0x10 // up up
     case 40: return 0x20 // down down
     case 37: return 0x40 // L L
-    case 39: return 0x39 // R R
+    case 39: return 0x80 // R R
   }
 }
 
@@ -55,7 +55,7 @@ const startArrayBuf = (arrayBuf) => {
 
   const nes = new Uint8Array(arrayBuf)
   // add key pad code in tail
-  const size = nes.byteLength //+ 1
+  const size = nes.byteLength + 1
   const ptr = Module._malloc(size)
   buf = new Uint8Array(Module.HEAPU8.buffer, ptr, size)
   buf.set(nes)
@@ -65,7 +65,7 @@ const startArrayBuf = (arrayBuf) => {
 }
 
 // called from html
-export const start = async (rom = './roms/apu/lin_ctr.nes') => {
+export const start = async (rom = './roms/games/smbros.nes') => {
   const res = await fetch(rom);
   const arrayBuf = await res.arrayBuffer();
   startArrayBuf(arrayBuf);
