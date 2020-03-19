@@ -1,5 +1,9 @@
 # nes_emulator
-NES's rusty emulation
+NES Emulator written in Rust  
+<img src="https://user-images.githubusercontent.com/22634362/77064099-2d51f680-6a22-11ea-801d-fb1feee6ad46.gif" width="400">
+
+
+
 
 # RUN
 ## wasm
@@ -15,8 +19,40 @@ $ open http://localhost:10080
 $cargo test
 ```
 
+# Refereneces
+## main code & copyright 
+from https://github.com/bokuweb/rustynes
+Copyright (c) 2018 @bokuweb
+## code
+- sample code from: 
+  - https://github.com/kamiyaowl/rust-nes-emulator
+- `apu` sample code from:
+  - https://github.com/fogleman/nes/blob/b2c994703237bdbe006c52809fecbbbc9ac35dd6/nes/apu.go
+  
+## website
+- http://wiki.nesdev.com/w/index.php/Programming_guide
+- http://pgate1.at-ninja.jp/NES_on_FPGA/nes_apu.htm
+- http://hp.vector.co.jp/authors/VA042397/nes/apu.html
+
+## books
+- https://booth.pm/ja/items/1748859
+
+
 # ROMS
 - hello
   - http://hp.vector.co.jp/authors/VA042397/nes/sample.html
 - nestest
   - https://wiki.nesdev.com/w/index.php/Emulator_tests
+- other test roms
+  - https://wiki.nesdev.com/w/index.php/Emulator_tests
+  
+# TODO
+- Mappers
+  - [ ] MMC1
+  - [ ] MMC3
+- Sound
+  - [ ] DMC
+  - [ ] sweep not correct work
+  - [ ] irq
+  
+  
