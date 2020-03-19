@@ -61,7 +61,9 @@ impl Triangle {
         self.timer_period |= (data as usize & 0x7) << 8;
         self.length_counter = COUNTER_TABLE[(data & 0xF8) as usize >> 3] as usize / 2;
         self.update_frequency();
-        self.change_frequency();
+        if self.enabled {
+          self.start();
+        }
         self.set_volume();
         self.counter_reload = true
       }
@@ -136,11 +138,16 @@ impl Triangle {
   }
 
   pub fn start(&mut self) {
-    self.playing = true;
-    unsafe {
-      start_oscillator(self.index);
-      set_oscillator_frequency(self.index, self.frequency);
-    };
+    if !self.playing {
+      self.playing = true;
+      unsafe {
+        start_oscillator(self.index);
+        set_oscillator_frequency(self.index, self.frequency);
+        self.set_volume();
+      };
+    } else {
+      self.change_frequency();
+    }
   }
 
   pub fn stop(&mut self) {
