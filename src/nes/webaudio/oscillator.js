@@ -20,6 +20,7 @@ export default class Oscillator {
       this.stop()
     }
     this.playing = true
+    this.setVolume(0)
     this.oscillator.start(0)
   }
 
@@ -46,7 +47,6 @@ export default class Oscillator {
         oscillator.type = options.kind
       }
     }
-    oscillator.type = 'sawtooth'
     if (options.frequency) oscillator.frequency.value = options.frequency
     if (options.harmonics) {
       const waveform = this.context.createPeriodicWave(
@@ -56,17 +56,18 @@ export default class Oscillator {
       oscillator.setPeriodicWave(waveform);
     }
     var inverter = this.context.createGain() // for square
-    inverter.gain.value = -1
+    inverter.gain.value = -0.5
     this.delay = this.context.createDelay() // for duty
     this.duty = 0.5
 
     this.gain = this.context.createGain()
-    this.gain.gain.volume = 0.01
-    this.gain.gain.value = 1
+    this.gain.gain.value = 0.5
     oscillator.connect(inverter)
     oscillator.connect(this.gain)
     inverter.connect(this.delay)
-    this.delay.connect(this.gain)
+    if (this.type === 'square') {
+      this.delay.connect(this.gain)
+    }
     this.gain.connect(this.context.destination)
     return oscillator
   }
@@ -82,17 +83,19 @@ export default class Oscillator {
 
   setFrequency (frequency) {
     this.oscillator.frequency.value = frequency
-    this.changeDuty()
+    if (this.type === 'square') {
+      this.changeDuty()
+    }
   }
 
   changeFrequency (frequency) {
     this.oscillator.frequency.setValueAtTime(frequency, this.context.currentTime)
-    this.oscillator.frequency.value = frequency
-    this.changeDuty(frequency)
+    this.setFrequency(frequency)
+
   }
 
   setVolume (volume) {
     volume = Math.max(0, Math.min(1, volume))
-    this.gain.gain.value = volume
+    this.gain.gain.value = volume/2
   }
 }
