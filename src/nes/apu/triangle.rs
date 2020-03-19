@@ -64,7 +64,6 @@ impl Triangle {
         if self.enabled {
           self.start();
         }
-        self.set_volume();
         self.counter_reload = true
       }
       _ => (),
@@ -74,7 +73,7 @@ impl Triangle {
   pub fn update_counter(&mut self) {
     self.step_length();
     self.step_linear_counter();
-    if self.length_counter == 0 || self.linear_counter == 0 {
+    if self.length_counter == 0  || self.linear_counter == 0 {
       self.stop();
     }
   }
@@ -143,11 +142,11 @@ impl Triangle {
       unsafe {
         start_oscillator(self.index);
         set_oscillator_frequency(self.index, self.frequency);
-        self.set_volume();
       };
     } else {
       self.change_frequency();
     }
+    self.set_volume();
   }
 
   pub fn stop(&mut self) {
