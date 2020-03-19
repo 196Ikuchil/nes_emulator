@@ -72,6 +72,9 @@ impl Triangle {
   pub fn update_counter(&mut self) {
     self.step_length();
     self.step_linear_counter();
+    if self.length_counter == 0 || self.linear_counter == 0 {
+      self.stop();
+    }
   }
 
   fn step_length(&mut self) {
@@ -84,7 +87,7 @@ impl Triangle {
     if self.counter_reload {
       self.linear_counter = self.counter_period;
     } else if self.linear_counter > 0 {
-      self.linear_counter -= 0;
+      self.linear_counter -= 1;
     }
 
     if self.is_length_enabled {
@@ -110,6 +113,9 @@ impl Triangle {
     unsafe { set_oscillator_volume(self.index, self.get_volume()) }
   }
 
+  // current volume is set manually
+  // actually set automatically
+  // TODO: therefore, call stop on update_counter()
   fn get_volume(&self) -> f32 {
     let vol = if !self.enabled || self.length_counter == 0 || self.linear_counter == 0 {
       0 as f32
@@ -141,6 +147,7 @@ impl Triangle {
     if self.playing {
       unsafe {
         stop_oscillator(self.index);
+        set_oscillator_volume(self.index, 0.0);
       }
       self.playing = false
     }
