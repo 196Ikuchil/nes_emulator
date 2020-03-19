@@ -61,8 +61,9 @@ impl Triangle {
         self.timer_period |= (data as usize & 0x7) << 8;
         self.length_counter = COUNTER_TABLE[(data & 0xF8) as usize >> 3] as usize / 2;
         self.update_frequency();
-        self.change_frequency();
-        self.set_volume();
+        if self.enabled {
+          self.start();
+        }
         self.counter_reload = true
       }
       _ => (),
@@ -72,6 +73,9 @@ impl Triangle {
   pub fn update_counter(&mut self) {
     self.step_length();
     self.step_linear_counter();
+    if self.length_counter == 0  || self.linear_counter == 0 {
+      self.stop();
+    }
   }
 
   fn step_length(&mut self) {
@@ -84,7 +88,7 @@ impl Triangle {
     if self.counter_reload {
       self.linear_counter = self.counter_period;
     } else if self.linear_counter > 0 {
-      self.linear_counter -= 0;
+      self.linear_counter -= 1;
     }
 
     if self.is_length_enabled {
@@ -110,6 +114,9 @@ impl Triangle {
     unsafe { set_oscillator_volume(self.index, self.get_volume()) }
   }
 
+  // current volume is set manually
+  // actually set automatically
+  // TODO: therefore, call stop on update_counter()
   fn get_volume(&self) -> f32 {
     let vol = if !self.enabled || self.length_counter == 0 || self.linear_counter == 0 {
       0 as f32
@@ -130,17 +137,23 @@ impl Triangle {
   }
 
   pub fn start(&mut self) {
-    self.playing = true;
-    unsafe {
-      start_oscillator(self.index);
-      set_oscillator_frequency(self.index, self.frequency);
-    };
+    if !self.playing {
+      self.playing = true;
+      unsafe {
+        start_oscillator(self.index);
+        set_oscillator_frequency(self.index, self.frequency);
+      };
+    } else {
+      self.change_frequency();
+    }
+    self.set_volume();
   }
 
   pub fn stop(&mut self) {
     if self.playing {
       unsafe {
         stop_oscillator(self.index);
+        set_oscillator_volume(self.index, 0.0);
       }
       self.playing = false
     }

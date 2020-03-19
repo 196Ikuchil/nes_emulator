@@ -31,7 +31,7 @@ export default class Noise {
 
   setVolume (v) {
     v = Math.max(0, Math.min(1, v))
-    this.gain.gain.value = v
+    this.gain.gain.value = v/2
   }
 
   setFrequency (freq) {

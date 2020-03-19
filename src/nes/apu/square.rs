@@ -78,7 +78,7 @@ impl Square {
       0x01 => {
         self.is_sweep_enabled = data & 0x80 == 0x80;
         self.sweep_unit_divider = ((data as usize >> 4) & 0x07) + 1;
-        self.is_sweep_direction_upper = data & 0x08 == 0x80;
+        self.is_sweep_direction_upper = data & 0x08 == 0x08;
         self.sweep_shift_amount = data as usize & 0x07;
       }
       0x02 => {
@@ -209,10 +209,12 @@ impl Square {
   }
 
   fn get_volume(&self) -> f32 {
-    let vol = if !self.is_envelope_enabled || self.is_sweep_overflowed || self.length_counter == 0 || self.divider_frequency < 8{
-      self.envelope_period_and_volume
-    } else {
+    let vol = if !self.enabled || self.is_sweep_overflowed || self.length_counter == 0 { // || duty == 0
+      0
+    } else if self.is_envelope_enabled {
       self.envelope_volume
+    } else {
+      self.envelope_period_and_volume
     };
     vol as f32 / (GROBAL_GAIN)
   }

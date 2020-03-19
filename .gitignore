@@ -15,4 +15,7 @@ Cargo.lock
 # node
 /node_modules/
 
+# own roms
+/roms/games/
+
 .DS_Store

@@ -70,14 +70,21 @@ impl Renderer {
     let is_vertical_reverse = (attr & 0x80) == 0x80;
     let is_horizontal_reverse = (attr & 0x40) == 0x40;
     let is_low_priority = (attr & 0x20) == 0x20;
-    for i in 0..8 {
+    let h = sprite.len();
+    for i in 0..h {
+      let y = position.1 as usize + if is_vertical_reverse { h - 1 - i} else { i };
+      if y >= 224 {
+        continue
+      }
       for j in 0..8 {
         let x = position.0 as usize + if is_horizontal_reverse { 7 - j } else { j };
-        let y = position.1 as usize + if is_vertical_reverse { 7 - i } else { i };
+        if x >= 256 {
+          continue
+        }
         if is_low_priority && self.should_pixel_hide(x, y, background) {
           continue
         }
-        if [i][j] != 0 {
+        if sprite[i][j] != 0 {
           let color_id = palette[sprite[i][j] as usize];
           let color = COLORS[color_id as usize];
           let index = (x + (y * 0x100)) * 4;
