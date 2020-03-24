@@ -67,7 +67,7 @@ impl Ppu {
     self.register.write(addr, data, &mut self.ctx, mapper)
   }
 
-  pub fn run(&mut self, cycle: usize, nmi: &mut bool) -> bool {
+  pub fn run(&mut self, cycle: usize, nmi: &mut bool, mapper: &dyn Mapper) -> bool {
     let cycle = self.cycle + cycle;
     if cycle < CYCLES_PER_LINE {
       self.cycle = cycle;
@@ -105,6 +105,7 @@ impl Ppu {
         (tile_x, tile_y),
         (scroll_x, scroll_y),
         &mut config,
+        mapper
       );
     }
 
@@ -129,6 +130,7 @@ impl Ppu {
         &self.ctx.palette,
         self.register.get_sprite_table_offset(),
         self.register.is_sprite_8x8(),
+        mapper,
       );
       return true
     }

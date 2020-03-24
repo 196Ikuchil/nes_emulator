@@ -3,6 +3,7 @@ use super::super::types::{Data, Addr};
 use super::palette::*;
 use super::sprite_utils::*;
 use super::tile::Tile;
+use super::Mapper;
 
 #[derive(Debug)]
 pub struct BackgroundCtx {
@@ -36,6 +37,7 @@ impl Background {
     tile: (Data, Data),
     scroll: (Data, Data),
     config: &mut SpriteConfig,
+    mapper: &dyn Mapper
   ) {
     // INFO: Horizontal offsets range from 0 to 255. "Normal" vertical offsets range from 0 to 239,
     // while values of 240 to 255 are treated as -16 through -1 in a way, but tile data is incorrectly
@@ -50,7 +52,7 @@ impl Background {
       config.offset_addr_by_name_table = Some((name_table_id as Addr) * 0x400);
       let position: SpritePosition = (clamped_tile_x as u8, clamped_tile_y as u8);
       self.0.push(BackgroundCtx {
-        tile: Tile::new(vram, cram, palette, &position, &config),
+        tile: Tile::new(vram, cram, palette, &position, &config, mapper),
         scroll_x: scroll.0,
         scroll_y: scroll.1,
         is_enabled: config.is_background_enable,

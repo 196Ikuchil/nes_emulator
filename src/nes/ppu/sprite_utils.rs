@@ -1,5 +1,6 @@
 use super::super::types::{Data, Addr, Word};
 use super::super::Ram;
+use super::Mapper;
 
 pub type Sprite = Vec<Vec<Data>>;
 
@@ -45,14 +46,14 @@ pub fn mirror_down_sprite_addr(addr: Addr, is_horizontal_mirror: bool) -> Addr {
   }
 }
 
-pub fn build(cram: &Ram, tile_id: Data, offset: Addr, is_8x8: bool) -> Sprite {
+pub fn build(cram: &Ram, tile_id: Data, offset: Addr, is_8x8: bool, mapper: &dyn Mapper) -> Sprite {
   let h = if is_8x8 {1} else {2};
   let mut sprite: Sprite = (0..8 * h).into_iter().map(|_| vec![0; 8 * h]).collect();
   for k in 0..h {
     for i in 0..16 {
       for j in 0..8 {
         let addr = ((tile_id + (k as Data)) as Addr) * 16 + i + offset; // pattern table
-        let data = cram.read(addr);
+        let data = cram.read(mapper.get_cram_index(addr));
         if data & (0x80 >> j) as Data != 0 {
           sprite[((k as u16) * 8 + i % 8) as usize][j] += (0x01 << (i / 8)) as u8;
         }

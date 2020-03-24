@@ -72,7 +72,7 @@ pub fn run(ctx: &mut Context, key_state: Data){
       cpu::run(&mut ctx.cpu_register, &mut cpu_bus, &mut ctx.nmi) as Word
     };
     ctx.apu.run(cycle);
-    let is_ready = ctx.ppu.run((cycle * 3) as usize, &mut ctx.nmi);
+    let is_ready = ctx.ppu.run((cycle * 3) as usize, &mut ctx.nmi, &*ctx.mapper);
     if is_ready {
       if ctx.ppu.background.0.len() != 0 {
         ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites);

@@ -2,6 +2,7 @@ use self::super::palette::*;
 use self::super::sprite_utils::*;
 use self::super::Ram;
 use super::super::types::{Data, Addr};
+use super::Mapper;
 
 // 256 bytes
 const OAM_RAM_CAPACITY: u16 = 0x100;
@@ -17,7 +18,7 @@ pub struct SpriteWithCtx {
 }
 
 // make all registered from oam
-pub fn build_sprites<P: PaletteRam>(cram: &Ram, oam_ram: &Ram, palette: &P, offset: Addr, is_8x8: bool) ->SpritesWithCtx {
+pub fn build_sprites<P: PaletteRam>(cram: &Ram, oam_ram: &Ram, palette: &P, offset: Addr, is_8x8: bool, mapper: &dyn Mapper) ->SpritesWithCtx {
   let mut buf: SpritesWithCtx = vec![];
   for i in 0..(OAM_RAM_CAPACITY / 4){
      // INFO: Offset sprite Y position, because First and last 8line is not rendered.
@@ -38,7 +39,7 @@ pub fn build_sprites<P: PaletteRam>(cram: &Ram, oam_ram: &Ram, palette: &P, offs
         (offset, sprite_id)
       };
       let x = oam_ram.read(base + 3);
-      let sprite = build(&cram, sprite_id as Data, offset, is_8x8);
+      let sprite = build(&cram, sprite_id as Data, offset, is_8x8, mapper);
       let position: SpritePosition = (x, y - 8);
       let palette_id = attr & 0x03;
       buf.push(SpriteWithCtx {
