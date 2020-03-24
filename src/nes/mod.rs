@@ -88,7 +88,7 @@ pub fn run(ctx: &mut Context, key_state: Data){
 impl Context {
   pub fn new(buf: &mut [Data]) -> Self {
     let cassette = cassette_paser::parse(buf);
-    let mapper = Mapper::new(cassette.mapper);
+    let mapper = Mapper::new(&cassette);
     Context {
       apu: Apu::new(),
       cpu_register: cpu_register::Register::new(),
