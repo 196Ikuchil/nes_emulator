@@ -11,6 +11,7 @@ pub struct Bus<'a> {
   apu: &'a mut Apu,
   program_rom: &'a Rom,
   work_ram: &'a mut Ram,
+  sram: &'a mut Ram,
   ppu: &'a mut Ppu,
   dma: &'a mut Dma,
   keypad: &'a mut Keypad,
@@ -28,6 +29,7 @@ impl<'a> Bus<'a> {
     apu: &'a mut Apu,
     program_rom: &'a Rom,
     work_ram: &'a mut Ram,
+    sram: &'a mut Ram,
     ppu: &'a mut Ppu,
     dma: &'a mut Dma,
     keypad: &'a mut Keypad,
@@ -37,6 +39,7 @@ impl<'a> Bus<'a> {
       apu,
       program_rom,
       work_ram,
+      sram,
       ppu,
       dma,
       keypad,
@@ -59,7 +62,7 @@ impl<'a> CpuBus for Bus<'a> {
       0x4016 => self.keypad.read(),
       0x4017 => 0, // TODO: 2player
       0x4000..=0x401F => self.apu.read(addr - 0x4000),
-      0x6000..=0xFFFF => self.mapper.read(addr, &self.program_rom),
+      0x6000..=0xFFFF => self.mapper.read(addr, &self.program_rom, &self.sram),
       _ => panic!("[READ] There is an illegal address (0x{:x}) access.", addr),
     }
   }
@@ -71,7 +74,7 @@ impl<'a> CpuBus for Bus<'a> {
       0x4014 => self.dma.write(data),
       0x4016 => self.keypad.write(data),
       0x4000..=0x401F => self.apu.write(addr - 0x4000, data),
-      0x6000..=0xFFFF => self.mapper.write(addr, data, &self.program_rom),
+      0x6000..=0xFFFF => self.mapper.write(addr, data, &self.program_rom, &mut self.sram),
       _ => panic!("[WRITE] There is an illegal address (0x{:x}) access.", addr),
     };
   }

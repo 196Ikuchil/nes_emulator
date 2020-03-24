@@ -2,6 +2,7 @@ mod mapper0;
 mod mapper;
 
 pub use super::types::*;
+pub use super::ram::Ram;
 pub use super::rom::Rom;
 pub use self::mapper::Mapper;
 pub use self::mapper0::Mapper0;

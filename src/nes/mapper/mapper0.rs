@@ -1,6 +1,7 @@
 use super::mapper::*;
 use super::Data;
 use super::Addr;
+use super::Ram;
 use super::Rom;
 
 #[derive(Debug)]
@@ -19,7 +20,7 @@ impl Mapper for Mapper0 {
     addr
   }
 
-  fn read(&mut self, addr: Addr, prg_rom: &Rom) -> Data {
+  fn read(&mut self, addr: Addr, prg_rom: &Rom, sram: &Ram) -> Data {
     match addr {
       0x6000..=0x7FFF => {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
@@ -34,7 +35,7 @@ impl Mapper for Mapper0 {
     }
   }
 
-  fn write(&mut self, addr: Addr, data: Data, prg_rom: &Rom) {
+  fn write(&mut self, addr: Addr, data: Data, prg_rom: &Rom, sram: &mut Ram) {
     match addr {
       0x6000..=0x7FFF => {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
