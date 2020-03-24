@@ -11,6 +11,7 @@ use super::super::types::{Data, Addr};
 use super::super::Ram;
 use super::palette::*;
 use super::PpuCtx;
+use super::Mapper;
 
 #[derive(Debug)]
 pub struct Register {
@@ -46,8 +47,8 @@ pub struct Register {
   | 0x3F20-0x3FFF  |  mirror of 0x3F00-0x3F1F   |
   */
   pub trait PpuRegister {
-    fn read<P: PaletteRam>(&mut self, addr: Addr, ctx: &mut PpuCtx<P>) -> Data;
-    fn write<P: PaletteRam>(&mut self, addr: Addr, ddata: Data, ctx: &mut PpuCtx<P>);
+    fn read<P: PaletteRam>(&mut self, addr: Addr, ctx: &mut PpuCtx<P>, mapper: &dyn Mapper) -> Data;
+    fn write<P: PaletteRam>(&mut self, addr: Addr, ddata: Data, ctx: &mut PpuCtx<P>, mapper: &mut dyn Mapper);
     fn clear_vblank(&mut self);
     fn clear_sprite_hit(&mut self);
     fn set_vblank(&mut self);
@@ -98,17 +99,17 @@ impl Register {
     self.ppu_addr.write(data)
   }
 
-  fn read_ppu_data<P: PaletteRam>(&mut self, vram: &Ram, cram: &Ram, palette: &P) -> Data {
+  fn read_ppu_data<P: PaletteRam>(&mut self, vram: &Ram, cram: &Ram, palette: &P, mapper: &dyn Mapper) -> Data {
     let addr = self.ppu_addr.get();
-    let data = self.ppu_data.read(vram, cram,addr, palette);
+    let data = self.ppu_data.read(vram, cram,addr, palette, mapper);
     let v = self.get_ppu_addr_increment_value() as u16;
     self.ppu_addr.update(v);
     data
   }
 
-  fn write_ppu_data<P: PaletteRam>(&mut self, data: Data, vram: &mut Ram, cram: &mut Ram, palette: &mut P){
+  fn write_ppu_data<P: PaletteRam>(&mut self, data: Data, vram: &mut Ram, cram: &mut Ram, palette: &mut P, mapper: &mut Mapper){
     let addr = self.ppu_addr.get();
-    self.ppu_data.write(vram, cram, addr ,data, palette);
+    self.ppu_data.write(vram, cram, addr ,data, palette, mapper);
     let v = self.get_ppu_addr_increment_value() as u16;
     self.ppu_addr.update(v);
   }
@@ -116,16 +117,16 @@ impl Register {
 
 impl PpuRegister for Register {
 
-  fn read<P: PaletteRam>(&mut self, addr: Addr, ctx: &mut PpuCtx<P>) -> Data{
+  fn read<P: PaletteRam>(&mut self, addr: Addr, ctx: &mut PpuCtx<P>, mapper: &dyn Mapper) -> Data{
     match addr {
       0x0002 => self.read_status(),
       0x0004 => self.oam.read_data(&ctx.oam_ram),
-      0x0007 => self.read_ppu_data(&ctx.vram, &ctx.cram, &ctx.palette),
+      0x0007 => self.read_ppu_data(&ctx.vram, &ctx.cram, &ctx.palette, mapper),
       _ => 0,
     }
   }
 
-  fn write<P: PaletteRam>(&mut self, addr: Addr, data: Data, ctx: &mut PpuCtx<P>) {
+  fn write<P: PaletteRam>(&mut self, addr: Addr, data: Data, ctx: &mut PpuCtx<P>, mapper: &mut dyn Mapper) {
     match addr {
       0x0000 => self.ppu_ctrl1 = data,
       0x0001 => self.ppu_ctrl2 = data,
@@ -133,7 +134,7 @@ impl PpuRegister for Register {
       0x0004 => self.write_oam_data(data, &mut ctx.oam_ram),
       0x0005 => self.ppu_scroll.write(data),
       0x0006 => self.write_ppu_addr(data),
-      0x0007 => self.write_ppu_data(data, &mut ctx.vram, &mut ctx.cram, &mut ctx.palette),
+      0x0007 => self.write_ppu_data(data, &mut ctx.vram, &mut ctx.cram, &mut ctx.palette, mapper),
       _ => (),
     }
   }

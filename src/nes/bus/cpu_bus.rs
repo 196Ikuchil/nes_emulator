@@ -55,7 +55,7 @@ impl<'a> CpuBus for Bus<'a> {
   fn read(&mut self, addr: Addr) -> Data {
     match addr {
       0x0000..=0x1FFF => self.work_ram.read(addr & 0x07FF),
-      0x2000..=0x3FFF => self.ppu.read(addr - 0x2000),
+      0x2000..=0x3FFF => self.ppu.read(addr - 0x2000, &*self.mapper),
       0x4016 => self.keypad.read(),
       0x4017 => 0, // TODO: 2player
       0x4000..=0x401F => self.apu.read(addr - 0x4000),
@@ -67,7 +67,7 @@ impl<'a> CpuBus for Bus<'a> {
   fn write(&mut self, addr: Addr, data: Data) {
     match addr {
       0x0000..=0x1FFF => self.work_ram.write(addr & 0x07FF, data),
-      0x2000..=0x3FFF => self.ppu.write(addr - 0x2000, data),
+      0x2000..=0x3FFF => self.ppu.write(addr - 0x2000, data, &mut *self.mapper),
       0x4014 => self.dma.write(data),
       0x4016 => self.keypad.write(data),
       0x4000..=0x401F => self.apu.write(addr - 0x4000, data),
