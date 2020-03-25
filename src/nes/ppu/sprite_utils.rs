@@ -33,12 +33,16 @@ pub fn get_attribute(vram: &Ram, pos: &SpritePosition, config: &SpriteConfig) ->
 
 pub fn mirror_down_sprite_addr(addr: Addr, is_horizontal_mirror: bool) -> Addr {
   if !is_horizontal_mirror {
+    if 0x0800 <= addr && addr < 0x1000 { // vertical mirror
+      return addr - 0x0800 as Addr
+    }
     return addr;
+  } else {
+    if (0x0400 <= addr && addr < 0x0800) || addr >= 0x0C00 { // horizontal mirror
+      return addr - 0x400 as Addr;
+    }
+     return addr
   }
-  if (0x0400 <= addr && addr < 0x0800) || addr >= 0x0C00 { // horizontal mirror
-    return addr - 0x400 as Addr;
-  }
-  addr
 }
 
 pub fn build(cram: &Ram, tile_id: Data, offset: Addr, is_8x8: bool) -> Sprite {
