@@ -6,6 +6,7 @@ mod sprite;
 mod sprite_utils;
 
 use super::types::{Addr, Data};
+use super::mapper::Mapper;
 use self::super::ram::Ram;
 use self::register::*;
 pub use self::palette::*;
@@ -58,15 +59,15 @@ impl Ppu {
     }
   }
 
-  pub fn read(&mut self, addr: Addr) -> Data {
-    self.register.read(addr, &mut self.ctx)
+  pub fn read(&mut self, addr: Addr, mapper: &dyn Mapper) -> Data {
+    self.register.read(addr, &mut self.ctx, mapper)
   }
 
-  pub fn write(&mut self, addr: Addr, data: Data){
-    self.register.write(addr, data, &mut self.ctx)
+  pub fn write(&mut self, addr: Addr, data: Data, mapper: &mut dyn Mapper){
+    self.register.write(addr, data, &mut self.ctx, mapper)
   }
 
-  pub fn run(&mut self, cycle: usize, nmi: &mut bool) -> bool {
+  pub fn run(&mut self, cycle: usize, nmi: &mut bool, mapper: &dyn Mapper) -> bool {
     let cycle = self.cycle + cycle;
     if cycle < CYCLES_PER_LINE {
       self.cycle = cycle;
@@ -104,6 +105,7 @@ impl Ppu {
         (tile_x, tile_y),
         (scroll_x, scroll_y),
         &mut config,
+        mapper
       );
     }
 
@@ -128,6 +130,7 @@ impl Ppu {
         &self.ctx.palette,
         self.register.get_sprite_table_offset(),
         self.register.is_sprite_8x8(),
+        mapper,
       );
       return true
     }

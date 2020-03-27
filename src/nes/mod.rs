@@ -11,10 +11,12 @@ mod ram;
 mod rom;
 mod ppu;
 mod renderer;
+mod mapper;
 
 pub use self::apu::*;
 pub use self::renderer::*;
 pub use self::keypad::*;
+use self::mapper::*;
 use self::bus::cpu_bus;
 use self::ram::Ram;
 use self::rom::Rom;
@@ -30,11 +32,13 @@ pub struct Context {
   work_ram: Ram,
   ppu: Ppu,
   program_rom: Rom,
+  sram: Ram,
   cpu_register: cpu_register::Register,
   dma: Dma,
   nmi: bool,
   renderer: Renderer,
   keypad: Keypad,
+  mapper: Box<dyn Mapper>,
 }
 
 pub fn reset(ctx: &mut Context) {
@@ -42,9 +46,11 @@ pub fn reset(ctx: &mut Context) {
     &mut ctx.apu,
     &ctx.program_rom,
     &mut ctx.work_ram,
+    &mut ctx.sram,
     &mut ctx.ppu,
     &mut ctx.dma,
     &mut ctx.keypad,
+    &mut *ctx.mapper,
   );
   cpu::reset(&mut ctx.cpu_register, &mut cpu_bus);
 }
@@ -60,14 +66,16 @@ pub fn run(ctx: &mut Context, key_state: Data){
         &mut ctx.apu,
         &ctx.program_rom,
         &mut ctx.work_ram,
+        &mut ctx.sram,
         &mut ctx.ppu,
         &mut ctx.dma,
         &mut ctx.keypad,
+        &mut *ctx.mapper,
       );
       cpu::run(&mut ctx.cpu_register, &mut cpu_bus, &mut ctx.nmi) as Word
     };
     ctx.apu.run(cycle);
-    let is_ready = ctx.ppu.run((cycle * 3) as usize, &mut ctx.nmi);
+    let is_ready = ctx.ppu.run((cycle * 3) as usize, &mut ctx.nmi, &*ctx.mapper);
     if is_ready {
       if ctx.ppu.background.0.len() != 0 {
         ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites);
@@ -80,6 +88,7 @@ pub fn run(ctx: &mut Context, key_state: Data){
 impl Context {
   pub fn new(buf: &mut [Data]) -> Self {
     let cassette = cassette_paser::parse(buf);
+    let mapper = Mapper::new(&cassette);
     Context {
       apu: Apu::new(),
       cpu_register: cpu_register::Register::new(),
@@ -91,10 +100,12 @@ impl Context {
         },
       ),
       work_ram: Ram::new(vec![0;0x0800]),
+      sram: Ram::new(vec![0;0x2000]),
       dma: Dma::new(),
       nmi: false,
       renderer: Renderer::new(),
       keypad: Keypad::new(),
+      mapper: mapper,
     }
   }
 }
