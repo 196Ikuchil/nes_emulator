@@ -12,6 +12,15 @@ pub fn nmi<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   register.set_PC(addr);
 }
 
+pub fn irq<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
+  register.set_status_break_mode(false);
+  push_pc(register, bus);
+  push_status(register, bus);
+  register.set_status_interrupt(true);
+  let addr = bus.read_word(0xFFFE);
+  register.set_PC(addr);
+}
+
 pub fn lda_imm<T: CpuRegister>(operand: Word, register: &mut T) {
     register
       .set_A(operand as Data)

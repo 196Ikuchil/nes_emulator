@@ -3,6 +3,9 @@ use super::Data;
 use super::Addr;
 use super::Ram;
 use super::Rom;
+use super::PpuConfig;
+use super::Ppu;
+use super::Register;
 
 #[derive(Debug)]
 pub struct Mapper0 {
@@ -26,16 +29,16 @@ impl Mapper for Mapper0 {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
         0
       }
-      0x8000..=0xBFFF => prg_rom.read(addr - 0x8000),
+      0x8000..=0xBFFF => prg_rom.read((addr - 0x8000) as u32),
       0xC000..=0xFFFF if prg_rom.size() <= 0x4000 => {
-        prg_rom.read(addr - 0xC000)
+        prg_rom.read((addr - 0xC000) as u32)
       }
-      0xC000..=0xFFFF => prg_rom.read(addr - 0x8000),
+      0xC000..=0xFFFF => prg_rom.read((addr - 0x8000) as u32),
       _ => panic!("[READ] There is an illegal address (0x{:x}) access on Mapper.", addr),
     }
   }
 
-  fn write(&mut self, addr: Addr, data: Data, prg_rom: &Rom, sram: &mut Ram) {
+  fn write(&mut self, addr: Addr, data: Data, sram: &mut Ram, ppu_cfg: &mut PpuConfig) {
     match addr {
       0x6000..=0x7FFF => {
         println!("Not implemented. This area is battery backup ram area 0x{:x}", addr );
@@ -46,4 +49,6 @@ impl Mapper for Mapper0 {
       _ => panic!("[WRITE] There is an illegal address (0x{:x}) access on Mapper.", addr),
     }
   }
+
+  fn step(&mut self, ppu: &Ppu, cpu_register: &mut Register) {}
 }
