@@ -17,4 +17,8 @@ impl Ram {
   pub fn write(&mut self, addr: Addr, data: Data) {
     self.field[addr as usize] = data;
   }
+
+  pub fn size(&self) -> usize {
+    self.field.len()
+  }
 }
