@@ -148,7 +148,15 @@ impl Ppu {
         + self.line
         + ((self.register.get_name_table_id() / 2) as usize * 240))
         / 8) as Data
-}
+  }
+
+  pub fn is_background_enabled(&self) -> bool {
+    self.register.is_background_enable()
+  }
+
+  pub fn is_sprite_enabled(&self) -> bool {
+    self.register.is_sprite_enable()
+  }
 
   // sprite 0 hit
   fn has_sprite_hit(&self, cycle: usize) -> bool {
