@@ -62,6 +62,7 @@ impl<'a> CpuBus for Bus<'a> {
       0x4016 => self.keypad.read(),
       0x4017 => 0, // TODO: 2player
       0x4000..=0x401F => self.apu.read(addr - 0x4000),
+      0x4020..=0x5FFF => 0, // TODO:
       0x6000..=0xFFFF => self.mapper.read(addr, &self.program_rom, &self.sram),
       _ => panic!("[READ] There is an illegal address (0x{:x}) access.", addr),
     }
@@ -74,7 +75,7 @@ impl<'a> CpuBus for Bus<'a> {
       0x4014 => self.dma.write(data),
       0x4016 => self.keypad.write(data),
       0x4000..=0x401F => self.apu.write(addr - 0x4000, data),
-      0x6000..=0xFFFF => self.mapper.write(addr, data, &self.program_rom, &mut self.sram),
+      0x6000..=0xFFFF => self.mapper.write(addr, data, &mut self.sram, &mut self.ppu.config),
       _ => panic!("[WRITE] There is an illegal address (0x{:x}) access.", addr),
     };
   }

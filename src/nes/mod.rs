@@ -78,6 +78,7 @@ pub fn run(ctx: &mut Context, key_state: Data){
     let mut is_ready = false;
     for _ in 0..cycle*3 { // refactor: step for mapper
       is_ready |= ctx.ppu.run(1 as usize, &mut ctx.nmi, &*ctx.mapper);
+      ctx.mapper.step(&ctx.ppu,&mut ctx.cpu_register);
     }
 
     if is_ready {
@@ -100,10 +101,10 @@ impl Context {
       ppu: Ppu::new(
         cassette.character_ram,
         PpuConfig {
-          is_horizontal_mirror: cassette.is_horizontal_mirror,
+          is_horizontal_mirror: true, //cassette.is_horizontal_mirror,
         },
       ),
-      work_ram: Ram::new(vec![0;0x0800]),
+      work_ram: Ram::new(vec![0;0x2000]),
       sram: Ram::new(vec![0;0x2000]),
       dma: Dma::new(),
       nmi: false,
