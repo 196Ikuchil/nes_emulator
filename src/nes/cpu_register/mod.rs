@@ -8,7 +8,7 @@ struct Status {
   reserved: bool, // non usable, always true
   break_mode: bool,
   decimal_mode: bool, // non usable on nes
-  interrupt: bool, // Is interrupt occured
+  interrupt: bool, // interrupt disable flag
   zero: bool,
   carry: bool,
 }
@@ -22,6 +22,19 @@ pub struct Register {
   S: Data, // stack pointer
   P: Status, // status register
   PC: u16,
+  interrupt_type: InterruptType,
+}
+
+pub enum InterruptType {
+  NONE,
+  INTERRUPT_IRQ,
+  INTERRUPT_NMI, // TODO
+}
+
+impl std::fmt::Debug for InterruptType {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+      write!(f, "{}", "derp")
+  }
 }
 
 impl Register {
@@ -42,6 +55,7 @@ impl Register {
         zero: false,
         carry: false,
       },
+      interrupt_type: InterruptType::NONE,
     }
   }
 }
@@ -66,6 +80,8 @@ pub trait CpuRegister {
   fn get_status_interrupt(&self) -> bool;
   fn get_status_zero(&self) -> bool;
   fn get_status_carry(&self) -> bool;
+  fn get_interrupt_type(&self) -> InterruptType;
+  fn is_interrupt_irq_enabled(&self) -> bool;
   fn set_status_negative(&mut self, b: bool) -> &mut Self;
   fn set_status_overflow(&mut self, b: bool) -> &mut Self;
   fn set_status_reserved(&mut self, b: bool) -> &mut Self;
@@ -74,7 +90,9 @@ pub trait CpuRegister {
   fn set_status_interrupt(&mut self, b: bool) -> &mut Self;
   fn set_status_zero(&mut self, b: bool) -> &mut Self;
   fn set_status_carry(&mut self, b: bool) -> &mut Self;
-
+  fn set_interrupt_type(&mut self, t: InterruptType) -> &mut Self;
+  fn set_interrupt_irq(&mut self) -> &mut Self;
+  fn set_interrupt_none(&mut self) -> &mut Self;
   fn update_status_negative_by(&mut self, v: Data) -> &mut Self;
   fn update_status_zero_by(&mut self, v: Data) -> &mut Self;
   fn increment_PC(&mut self) -> &mut Self;
@@ -163,6 +181,21 @@ impl CpuRegister for Register {
     self.P.carry
   }
 
+  fn get_interrupt_type(&self) -> InterruptType {
+    match self.interrupt_type {
+      InterruptType::INTERRUPT_IRQ => InterruptType::INTERRUPT_IRQ,
+      InterruptType::INTERRUPT_NMI => InterruptType::INTERRUPT_NMI, // current not used
+      _ => InterruptType::NONE,
+    }
+  }
+
+  fn is_interrupt_irq_enabled(&self) -> bool {
+     match self.interrupt_type {
+      InterruptType::INTERRUPT_IRQ => true,
+      _ => false,
+     }
+  }
+
   fn set_status_negative(&mut self, b: bool) -> &mut Self {
     self.P.negative = b;
     self
@@ -203,6 +236,21 @@ impl CpuRegister for Register {
     self
   }
 
+  fn set_interrupt_type(&mut self, t: InterruptType) -> &mut Self {
+    self.interrupt_type = t;
+    self
+  }
+
+  fn set_interrupt_irq(&mut self) -> &mut Self {
+    if !self.get_status_interrupt(){
+      self.set_interrupt_type(InterruptType::INTERRUPT_IRQ);
+    }
+    self
+  }
+
+  fn set_interrupt_none(&mut self) -> &mut Self {
+    self.set_interrupt_type(InterruptType::NONE)
+  }
 
   fn update_status_negative_by(&mut self, v: Data) -> &mut Self {
     self.set_status_negative((v & 0x80) == 0x80) // set bit 7 of culc result
