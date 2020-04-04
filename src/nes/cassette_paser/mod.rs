@@ -31,7 +31,7 @@ pub fn parse(buf: &mut [Data]) -> Cassette {
   let c_ram = if character_rom_start != character_rom_end {
     buf[character_rom_start..character_rom_end].to_vec()
   } else {
-    vec!(0;0x128)
+    vec!(0;0x2000)
   };
   Cassette {
     is_horizontal_mirror,
