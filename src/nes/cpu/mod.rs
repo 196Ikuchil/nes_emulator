@@ -22,7 +22,10 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &
     nmi(register, cpu_bus);
     *_nmi = false;
   }
-
+  if register.is_interrupt_irq_enabled() {
+    irq(register, cpu_bus);
+    register.set_interrupt_none();
+  }
   let code = fetch(register, cpu_bus);
   let ref opemap = opecodes::OPEMAP;
   let code = &*opemap.get(&code).unwrap();
@@ -104,14 +107,14 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &
 
     Instruction::BRK => brk(register, cpu_bus),
     Instruction::NOP => (),
-    Instruction::LAX => println!("{}", "TODO:Undocumented instruction"),
-    Instruction::SAX => println!("{}", "TODO:Undocumented instruction"),
-    Instruction::DCP => println!("{}", "TODO:Undocumented instruction"),
-    Instruction::ISB => println!("{}", "TODO:Undocumented instruction"),
-    Instruction::SLO => println!("{}", "TODO:Undocumented instruction"),
-    Instruction::RLA => println!("{}", "TODO:Undocumented instruction"),
-    Instruction::SRE => println!("{}", "TODO:Undocumented instruction"),
-    Instruction::RRA => println!("{}", "TODO:Undocumented instruction"),
+    Instruction::LAX => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::SAX => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::DCP => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::ISB => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::SLO => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::RLA => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::SRE => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::RRA => println!("TODO:Undocumented instruction{:?}",code),
     _ => panic!("Invalid code{:?}", code),
   }
   code.cycle
