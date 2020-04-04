@@ -10,7 +10,7 @@ impl Rom {
     Rom { vec: buf.clone() }
   }
 
-  pub fn read(&self, addr: Addr) -> Data {
+  pub fn read(&self, addr: u32) -> Data {
     self.vec[addr as usize]
   }
 
