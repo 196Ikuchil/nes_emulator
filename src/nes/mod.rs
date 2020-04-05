@@ -57,10 +57,14 @@ pub fn reset(ctx: &mut Context) {
 
 pub fn run(ctx: &mut Context, key_state: Data){
   ctx.keypad.update(key_state);
+  let mut stall: u8 = 0;
   loop {
     let cycle: Word = if ctx.dma.is_should_run() {
       ctx.dma.run(&ctx.work_ram, &mut ctx.ppu);
       DMA_CYCLES
+    } else if stall > 0 {
+      stall -= 1;
+      1
     } else {
       let mut cpu_bus = cpu_bus::Bus::new(
         &mut ctx.apu,
@@ -74,7 +78,8 @@ pub fn run(ctx: &mut Context, key_state: Data){
       );
       cpu::run(&mut ctx.cpu_register, &mut cpu_bus, &mut ctx.nmi) as Word
     };
-    ctx.apu.run(cycle);
+    // want to pass the cpu_bus
+    ctx.apu.run(cycle, &mut ctx.cpu_register, &mut *ctx.mapper, &ctx.sram, &ctx.program_rom, &mut stall);
     let mut is_ready = false;
     for _ in 0..cycle*3 { // refactor: step for mapper
       is_ready |= ctx.ppu.run(1 as usize, &mut ctx.nmi, &*ctx.mapper);
