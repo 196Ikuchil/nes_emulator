@@ -57,10 +57,14 @@ pub fn reset(ctx: &mut Context) {
 
 pub fn run(ctx: &mut Context, key_state: Data){
   ctx.keypad.update(key_state);
+  let mut stall: u8 = 0;
   loop {
     let cycle: Word = if ctx.dma.is_should_run() {
       ctx.dma.run(&ctx.work_ram, &mut ctx.ppu);
       DMA_CYCLES
+    } else if stall > 0 {
+      stall -= 1;
+      1
     } else {
       let mut cpu_bus = cpu_bus::Bus::new(
         &mut ctx.apu,
