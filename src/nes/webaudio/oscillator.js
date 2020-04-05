@@ -90,8 +90,9 @@ export default class Oscillator {
 
   changeFrequency (frequency) {
     this.oscillator.frequency.setValueAtTime(frequency, this.context.currentTime)
-    this.setFrequency(frequency)
-
+    if (this.type === 'square') {
+      this.changeDuty()
+    }
   }
 
   setVolume (volume) {
