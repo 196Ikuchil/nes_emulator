@@ -50,10 +50,10 @@ Copyright (c) 2018 @bokuweb
 # TODO
 - Mappers
   - [x] MMC3
-  - [ ] MMC4
+  - [x] MMC4
 - Sound
-  - [ ] DMC
+  - [x] DMC
   - [ ] sweep not correct work
-  - [ ] irq
+  - [x] irq
   
   
