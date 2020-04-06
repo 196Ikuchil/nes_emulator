@@ -3,8 +3,13 @@
 NES Emulator written in Rust  
 
 <img src="https://user-images.githubusercontent.com/22634362/77064099-2d51f680-6a22-11ea-801d-fb1feee6ad46.gif" width="400">
-<img src="https://user-images.githubusercontent.com/22634362/77730078-6a7e4000-7043-11ea-934f-c129c873f105.gif" width="300">
+Super Mario Bros.
 
+<img src="https://user-images.githubusercontent.com/22634362/77730078-6a7e4000-7043-11ea-934f-c129c873f105.gif" width="300">
+Dragon Quest
+
+<img src="https://user-images.githubusercontent.com/22634362/78538239-a7a8b600-782b-11ea-97a8-a9edfa51ea73.gif" width="300">
+Final FantasyIII
 
 # RUN
 ## wasm
