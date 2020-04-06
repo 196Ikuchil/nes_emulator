@@ -55,8 +55,15 @@ pub fn reset(ctx: &mut Context) {
   cpu::reset(&mut ctx.cpu_register, &mut cpu_bus);
 }
 
-pub fn run(ctx: &mut Context, key_state: Data){
+pub fn run(ctx: &mut Context, key_state: Data, debug_input: Data){
   ctx.keypad.update(key_state);
+
+  // debug
+  if debug_input & 0x01 == 0x01 {
+    ctx.sram.save();
+  }
+
+
   let mut stall: u8 = 0;
   loop {
     let cycle: Word = if ctx.dma.is_should_run() {
@@ -96,10 +103,10 @@ pub fn run(ctx: &mut Context, key_state: Data){
 }
 
 impl Context {
-  pub fn new(buf: &mut [Data]) -> Self {
+  pub fn new(buf: &mut [Data], sram: &mut [Data]) -> Self {
     let cassette = cassette_paser::parse(buf);
     let mapper = Mapper::new(&cassette);
-    Context {
+    let a = Context {
       apu: Apu::new(),
       cpu_register: cpu_register::Register::new(),
       program_rom: Rom::new(cassette.program_rom),
@@ -110,12 +117,14 @@ impl Context {
         },
       ),
       work_ram: Ram::new(vec![0;0x2000]),
-      sram: Ram::new(vec![0;0x2000]),
+      sram: Ram::new(sram.to_vec()),
       dma: Dma::new(),
       nmi: false,
       renderer: Renderer::new(),
       keypad: Keypad::new(),
       mapper: mapper,
-    }
+    };
+    // println!("reset {:?}", a.sram.size());
+    a
   }
 }
