@@ -54,8 +54,8 @@ Copyright (c) 2018 @bokuweb
   
 # TODO
 - Mappers
-  - [x] MMC3
-  - [x] MMC4
+  - [x] Mapper3
+  - [x] Mapper4
 - Sound
   - [x] DMC
   - [ ] sweep not correct work
