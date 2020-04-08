@@ -4,6 +4,7 @@ mod register;
 mod palette;
 mod sprite;
 mod sprite_utils;
+mod renderer;
 
 use super::types::{Addr, Data};
 use super::mapper::Mapper;
@@ -13,7 +14,7 @@ pub use self::palette::*;
 pub use self::sprite::*;
 pub use self::sprite_utils::*;
 pub use self::background::*;
-
+use self::renderer::Renderer;
 
 const CYCLES_PER_LINE: usize = 341;
 
@@ -39,6 +40,7 @@ pub struct Ppu {
   pub sprites: SpritesWithCtx,
   pub background: Background,
   pub config: PpuConfig,
+  renderer: Renderer,
 }
 
 impl Ppu {
@@ -56,6 +58,7 @@ impl Ppu {
       sprites: Vec::new(),
       background: Background::new(),
       config,
+      renderer: Renderer::new(),
     }
   }
 
@@ -133,6 +136,9 @@ impl Ppu {
         mapper,
       );
       self.sprites.reverse(); // low index is be front
+      if self.background.0.len() != 0 {
+        self.renderer.render(&self.background.0, &self.sprites, self.register.is_background_clip(), self.register.is_sprites_clip());
+      }
       return true
     }
 
