@@ -53,6 +53,8 @@ pub struct Register {
     fn clear_sprite_hit(&mut self);
     fn set_vblank(&mut self);
     fn set_sprite_hit(&mut self);
+    fn is_sprites_clip(&self) -> bool;
+    fn is_background_clip(&self) -> bool;
     fn is_sprite_enable(&self) -> bool;
     fn is_background_enable(&self) -> bool;
     fn is_irq_enable(&self) -> bool;
@@ -153,6 +155,14 @@ impl PpuRegister for Register {
 
   fn set_sprite_hit(&mut self) {
     self.ppu_status |= 0x40
+  }
+
+  fn is_sprites_clip(&self) -> bool {
+    self.ppu_ctrl2 & 0x02 != 0x02
+  }
+
+  fn is_background_clip(&self) -> bool {
+    self.ppu_ctrl2 & 0x01 != 0x01
   }
 
   fn is_background_enable(&self) -> bool {
