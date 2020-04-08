@@ -10,11 +10,9 @@ mod keypad;
 mod ram;
 mod rom;
 mod ppu;
-mod renderer;
 mod mapper;
 
 pub use self::apu::*;
-pub use self::renderer::*;
 pub use self::keypad::*;
 use self::mapper::*;
 use self::bus::cpu_bus;
@@ -36,7 +34,6 @@ pub struct Context {
   cpu_register: cpu_register::Register,
   dma: Dma,
   nmi: bool,
-  renderer: Renderer,
   keypad: Keypad,
   mapper: Box<dyn Mapper>,
 }
@@ -94,9 +91,6 @@ pub fn run(ctx: &mut Context, key_state: Data, debug_input: Data){
     }
 
     if is_ready {
-      if ctx.ppu.background.0.len() != 0 {
-        ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites, ctx.ppu.register.ppu_ctrl2);
-      }
       break;
     }
   }
@@ -120,7 +114,6 @@ impl Context {
       sram: Ram::new(sram.to_vec()),
       dma: Dma::new(),
       nmi: false,
-      renderer: Renderer::new(),
       keypad: Keypad::new(),
       mapper: mapper,
     }

@@ -1,6 +1,6 @@
 mod color;
 
-use super::types::{Data};
+use super::super::types::{Data};
 use super::{BackgroundField, BackgroundCtx};
 use super::{Sprite, SpritesWithCtx, SpritePosition};
 use super::{PaletteList};
@@ -19,11 +19,9 @@ impl Renderer {
     Renderer { buf: vec![0xFF;256*224*4]}
   }
 
-  pub fn render(&mut self, background: &BackgroundField, sprites: &SpritesWithCtx, ppu_register_ctrl2: Data) {
-    let is_background_clip = ppu_register_ctrl2 & 0x01 != 0x01;
-    let is_sprite_clip = ppu_register_ctrl2 & 0x02 != 0x02;
-    self.render_background(background, is_background_clip);
-    self.render_sprites(sprites,background, is_sprite_clip);
+  pub fn render(&mut self, background: &BackgroundField, sprites: &SpritesWithCtx, bg_clip: bool, sprite_clip: bool) {
+    self.render_background(background, bg_clip);
+    self.render_sprites(sprites,background, sprite_clip);
     unsafe {
       canvas_render(self.buf.as_ptr(), self.buf.len());
     }
@@ -53,7 +51,6 @@ impl Renderer {
                 self.buf[index] = color.0;
                 self.buf[index + 1] = color.1;
                 self.buf[index + 2] = color.2;
-                // TODO: See register value weather clip or not.
                 if clip && x < 8 {
                     self.buf[index + 3] = 0;
                 }
@@ -93,7 +90,6 @@ impl Renderer {
           self.buf[index] = color.0;
           self.buf[index + 1] = color.1;
           self.buf[index + 2] = color.2;
-          // TODO: See register value weather clip or not. ctrl2 $2001 -----+--
           if clip && x < 8 {
             self.buf[index + 3] = 0;
           }
