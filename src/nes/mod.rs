@@ -106,7 +106,7 @@ impl Context {
   pub fn new(buf: &mut [Data], sram: &mut [Data]) -> Self {
     let cassette = cassette_paser::parse(buf);
     let mapper = Mapper::new(&cassette);
-    let a = Context {
+    Context {
       apu: Apu::new(),
       cpu_register: cpu_register::Register::new(),
       program_rom: Rom::new(cassette.program_rom),
@@ -123,8 +123,6 @@ impl Context {
       renderer: Renderer::new(),
       keypad: Keypad::new(),
       mapper: mapper,
-    };
-    // println!("reset {:?}", a.sram.size());
-    a
+    }
   }
 }
