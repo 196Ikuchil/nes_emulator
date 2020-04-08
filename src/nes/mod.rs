@@ -113,7 +113,7 @@ impl Context {
       ppu: Ppu::new(
         cassette.character_ram,
         PpuConfig {
-          is_horizontal_mirror: true, //cassette.is_horizontal_mirror,
+          is_horizontal_mirror: cassette.is_horizontal_mirror,
         },
       ),
       work_ram: Ram::new(vec![0;0x2000]),
