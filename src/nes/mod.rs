@@ -95,7 +95,7 @@ pub fn run(ctx: &mut Context, key_state: Data, debug_input: Data){
 
     if is_ready {
       if ctx.ppu.background.0.len() != 0 {
-        ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites);
+        ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites, ctx.ppu.register.ppu_ctrl2);
       }
       break;
     }
