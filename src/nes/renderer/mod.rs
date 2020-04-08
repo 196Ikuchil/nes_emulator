@@ -19,25 +19,27 @@ impl Renderer {
     Renderer { buf: vec![0xFF;256*224*4]}
   }
 
-  pub fn render(&mut self, background: &BackgroundField, sprites: &SpritesWithCtx) {
-    self.render_background(background);
-    self.render_sprites(sprites,background);
+  pub fn render(&mut self, background: &BackgroundField, sprites: &SpritesWithCtx, ppu_register_ctrl2: Data) {
+    let is_background_clip = ppu_register_ctrl2 & 0x01 != 0x01;
+    let is_sprite_clip = ppu_register_ctrl2 & 0x02 != 0x02;
+    self.render_background(background, is_background_clip);
+    self.render_sprites(sprites,background, is_sprite_clip);
     unsafe {
       canvas_render(self.buf.as_ptr(), self.buf.len());
     }
   }
 
-  fn render_background(&mut self, background: &BackgroundField) {
+  fn render_background(&mut self, background: &BackgroundField, clip: bool) {
     for (i, bg) in background.into_iter().enumerate() {
       if bg.is_enabled {
         let x = (i % 33) * 8;
         let y = (i / 33) * 8;
-        self.render_tile(bg, x, y);
+        self.render_tile(bg, x, y, clip);
       }
     }
   }
 
-  fn render_tile(&mut self, bg: &BackgroundCtx, x: usize, y: usize) {
+  fn render_tile(&mut self, bg: &BackgroundCtx, x: usize, y: usize, clip: bool) {
     let offset_x = (bg.scroll_x % 8) as i32;
     let offset_y = (bg.scroll_y % 8) as i32;
     for i in 0..8 {
@@ -52,7 +54,7 @@ impl Renderer {
                 self.buf[index + 1] = color.1;
                 self.buf[index + 2] = color.2;
                 // TODO: See register value weather clip or not.
-                if x < 8 {
+                if clip && x < 8 {
                     self.buf[index + 3] = 0;
                 }
             }
@@ -60,13 +62,13 @@ impl Renderer {
     }
 }
 
-  fn render_sprites(&mut self, sprites: &SpritesWithCtx, background: &BackgroundField) {
+  fn render_sprites(&mut self, sprites: &SpritesWithCtx, background: &BackgroundField, clip: bool) {
     for sprite in sprites {
-      self.render_sprite(&sprite.sprite, &sprite.position,&sprite.palette ,sprite.attr, &background);
+      self.render_sprite(&sprite.sprite, &sprite.position,&sprite.palette ,sprite.attr, &background, clip);
     }
   }
 
-  fn render_sprite(&mut self, sprite: &Sprite, position: &SpritePosition, palette: &PaletteList, attr: Data, background: &BackgroundField) {
+  fn render_sprite(&mut self, sprite: &Sprite, position: &SpritePosition, palette: &PaletteList, attr: Data, background: &BackgroundField, clip: bool) {
     let is_vertical_reverse = (attr & 0x80) == 0x80;
     let is_horizontal_reverse = (attr & 0x40) == 0x40;
     let is_low_priority = (attr & 0x20) == 0x20;
@@ -92,7 +94,7 @@ impl Renderer {
           self.buf[index + 1] = color.1;
           self.buf[index + 2] = color.2;
           // TODO: See register value weather clip or not. ctrl2 $2001 -----+--
-          if x < 8 {
+          if clip && x < 8 {
             self.buf[index + 3] = 0;
           }
         }

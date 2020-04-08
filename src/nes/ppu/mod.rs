@@ -132,6 +132,7 @@ impl Ppu {
         self.register.is_sprite_8x8(),
         mapper,
       );
+      self.sprites.reverse(); // low index is be front
       return true
     }
 

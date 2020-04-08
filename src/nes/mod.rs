@@ -95,7 +95,7 @@ pub fn run(ctx: &mut Context, key_state: Data, debug_input: Data){
 
     if is_ready {
       if ctx.ppu.background.0.len() != 0 {
-        ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites);
+        ctx.renderer.render(&ctx.ppu.background.0, &ctx.ppu.sprites, ctx.ppu.register.ppu_ctrl2);
       }
       break;
     }
@@ -106,14 +106,14 @@ impl Context {
   pub fn new(buf: &mut [Data], sram: &mut [Data]) -> Self {
     let cassette = cassette_paser::parse(buf);
     let mapper = Mapper::new(&cassette);
-    let a = Context {
+    Context {
       apu: Apu::new(),
       cpu_register: cpu_register::Register::new(),
       program_rom: Rom::new(cassette.program_rom),
       ppu: Ppu::new(
         cassette.character_ram,
         PpuConfig {
-          is_horizontal_mirror: true, //cassette.is_horizontal_mirror,
+          is_horizontal_mirror: cassette.is_horizontal_mirror,
         },
       ),
       work_ram: Ram::new(vec![0;0x2000]),
@@ -123,8 +123,6 @@ impl Context {
       renderer: Renderer::new(),
       keypad: Keypad::new(),
       mapper: mapper,
-    };
-    // println!("reset {:?}", a.sram.size());
-    a
+    }
   }
 }
