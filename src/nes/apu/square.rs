@@ -5,227 +5,183 @@ use super::super::types::{Data, Addr};
 pub struct Square {
   index: usize,
   // $4000
-  is_length_counter_enabled: bool,
-  is_envelope_enabled: bool,
+  duty: usize,
+  is_length_enabled: bool,
   is_envelope_loop_enabled: bool,
-  envelope_period_and_volume: usize,
+  is_envelope_enabled: bool,
+  envelope_period: usize,
+  constant_volume: usize,
+  envelope_start: bool,
   // $4001
   is_sweep_enabled: bool,
-  sweep_unit_divider: usize,
-  is_sweep_direction_upper: bool,
+  sweep_period: usize,
+  is_sweep_negate: bool,
   sweep_shift_amount: usize,
+  is_sweep_reload: bool,
   // $4003 &0x04 << 8 | $4002
-  divider_frequency: usize,
-  length_counter: usize,
+  timer_period: usize,
+  length_value: usize,
+  duty_value: usize,
 
-  frequency: usize,
-  sweep_unit_counter: usize,
-  envelope_generator_counter: usize,
+  timer_value: usize,
   envelope_volume: usize,
-  is_sweep_overflowed: bool,
+  envelope_value: usize,
+  sweep_value: usize,
   enabled: bool,
-  playing: bool,
-}
-
-extern "C" {
-  fn start_oscillator(index: usize);
-  fn stop_oscillator(index: usize);
-  fn set_oscillator_frequency(index: usize, freq: usize);
-  fn change_oscillator_frequency(index: usize, freq: usize);
-  fn set_oscillator_volume(index: usize, volume: f32);
-  fn set_oscillator_duty(index: usize, duty: f32);
-
 }
 
 impl Square {
   pub fn new(index: usize) -> Self {
     Square {
       index,
-      is_length_counter_enabled: false,
-      is_envelope_enabled: false,
+      duty: 0,
+      is_length_enabled: false,
       is_envelope_loop_enabled: false,
-      envelope_period_and_volume: 0x0F,
+      is_envelope_enabled: false,
+      envelope_period: 0,
+      constant_volume: 0,
+      envelope_start: false,
       is_sweep_enabled: false,
-      sweep_unit_divider: 1,
-      is_sweep_direction_upper: true,
+      sweep_period: 0,
+      is_sweep_negate: false,
       sweep_shift_amount: 0,
-      divider_frequency: 1,
-      length_counter: 0,
+      is_sweep_reload: false,
+      timer_period: 0,
+      length_value: 0,
+      duty_value: 0,
 
-      frequency: 0,
-      sweep_unit_counter: 0,
-      envelope_generator_counter: 0,
+      timer_value: 0,
       envelope_volume: 0,
-      is_sweep_overflowed: false,
+      envelope_value: 0,
+      sweep_value: 0,
       enabled: false,
-      playing: false,
+
     }
   }
 
   pub fn write(&mut self, addr: Addr, data: Data) {
     match addr {
       0x00 => {
-        let duty = (data >> 6) & 0x3;
-        self.is_envelope_loop_enabled = (data & 0x20) == 0x20;
-        self.is_length_counter_enabled = !self.is_envelope_loop_enabled; // opposite loop flag
-        self.is_envelope_enabled = (data & 0x10) != 0x10; //actually register keep loop is disabled on nes
-        self.envelope_period_and_volume = data as usize & 0x0F;
-        unsafe {
-          set_oscillator_volume(self.index, self.get_volume());
-          set_oscillator_duty(self.index, self.get_duty(duty as usize));
-        }
+        self.duty = (data as usize & 0xC0) >> 6;
+        self.is_length_enabled = data & 0x20 != 0x20;
+        self.is_envelope_loop_enabled != self.is_length_enabled;
+        self.is_envelope_enabled = data & 0x10 != 0x10;
+        self.envelope_period = data as usize & 0x0F;
+        self.constant_volume = data as usize & 0x0F;
+        self.envelope_start = true;
       }
       0x01 => {
         self.is_sweep_enabled = data & 0x80 == 0x80;
-        self.sweep_unit_divider = ((data as usize >> 4) & 0x07) + 1;
-        self.is_sweep_direction_upper = data & 0x08 == 0x08;
+        self.sweep_period = ((data as usize & 0x70) >> 4) + 1;
+        self.is_sweep_negate = data & 0x08 == 0x08;
         self.sweep_shift_amount = data as usize & 0x07;
+        self.is_sweep_reload = true;
       }
       0x02 => {
-        self.divider_frequency = (self.divider_frequency & 0x700) | data as usize;
-        self.is_sweep_overflowed = false;
-        self.update_frequency();
-        self.change_frequency();
+        self.timer_period = (self.timer_period & 0x700) | data as usize;
       }
       0x03 => {
-        self.divider_frequency &= 0xFF;
-        self.divider_frequency |= (data as usize & 0x7) << 8;
-        self.is_sweep_overflowed = false;
-        if self.is_length_counter_enabled {
-          self.length_counter = COUNTER_TABLE[(data & 0xF8) as usize >> 3] as usize / 2;
-        }
-        self.update_frequency();
-        self.sweep_unit_counter = 0;
-        // envelope
-        self.envelope_generator_counter = self.envelope_period_and_volume;
-        self.envelope_volume = 0x0F;
-        if self.enabled {
-          self.start();
-        }
+        self.length_value = COUNTER_TABLE[(data & 0xF8) as usize >> 3] as usize;
+        self.timer_period &= 0x00FF;
+        self.timer_period |= (data as usize & 0x7) << 8;
+        self.envelope_start = true;
+        self.duty_value = 0;
       }
       _ => ()
     }
   }
 
-  fn change_frequency(&self){
-    unsafe {
-      change_oscillator_frequency(self.index, self.frequency);
-    }
-  }
-
-  pub fn update_frequency(&mut self) {
-    self.frequency = CPU_CLOCK / ((self.divider_frequency + 1) * 16) as usize;
-  }
-
   pub fn enable(&mut self) {
     self.enabled = true;
-    self.start();
   }
 
   pub fn disable(&mut self) {
     self.enabled = false;
-    self.stop();
-  }
-
-  pub fn start(&mut self) {
-    if !self.playing {
-      self.playing = true;
-      unsafe {
-        start_oscillator(self.index);
-        set_oscillator_frequency(self.index, self.frequency);
-      };
-    } else {
-      self.change_frequency();
-    }
-  }
-
-  pub fn stop(&mut self) {
-    if self.playing {
-      self.playing = false;
-      unsafe {
-        stop_oscillator(self.index);
-      };
-    }
+    self.length_value = 0;
   }
 
   pub fn has_count_end(&self) -> bool {
-    self.length_counter == 0
-  }
-
-  pub fn update_counters(&mut self ) {
-    if self.is_length_counter_enabled && self.length_counter > 0 {
-      self.length_counter -= 1;
-      if self.length_counter == 0 {
-          self.stop();
-      }
-    }
-
-    if !self.is_sweep_enabled || !self.playing {
-      return;
-    };
-
-    self.sweep_unit_counter += 1;
-    if self.sweep_unit_counter % self.sweep_unit_divider == 0 {
-        self.sweep_unit_counter = 0;
-        if self.is_sweep_direction_upper {
-            self.divider_frequency = self.divider_frequency -
-                                         (self.divider_frequency >>
-                                          self.sweep_shift_amount);
-        } else {
-            self.divider_frequency = self.divider_frequency +
-                                         (self.divider_frequency >>
-                                          self.sweep_shift_amount);
-
-        };
-        if self.divider_frequency > 0x7FF || self.divider_frequency < 8 {
-          self.is_sweep_overflowed = true;
-          self.stop();
-        }else {
-          self.is_sweep_overflowed = false;
-        }
-        self.update_frequency();
-        self.change_frequency();
+    if self.length_value == 0 {
+      true
+    } else {
+      false
     }
   }
 
-  // divider Excitation
-  pub fn update_envelope(&mut self) {
-    self.envelope_generator_counter -= 1;
-    if self.envelope_generator_counter <= 0 {
-      self.envelope_generator_counter = self.envelope_period_and_volume;
+  pub fn step_timer(&mut self) {
+    if self.timer_value == 0 {
+      self.timer_value = self.timer_period;
+      self.duty_value = (self.duty_value + 1) % 8;
+    } else  {
+      self.timer_value -= 1;
+    }
+  }
+
+  pub fn step_envelope(&mut self) {
+    if self.envelope_start {
+      self.envelope_volume = 15;
+      self.envelope_value = self.envelope_period;
+      self.envelope_start = false;
+    } else if self.envelope_value > 0 {
+      self.envelope_value -= 1;
+    } else {
       if self.envelope_volume > 0 {
         self.envelope_volume -= 1;
-      } else {
-        self.envelope_volume = if self.is_envelope_loop_enabled {
-          0x0F
-        } else {
-          0x00
-        };
+      } else if self.is_envelope_loop_enabled {
+        self.envelope_volume = 15;
       }
-    }
-    unsafe {
-      set_oscillator_volume(self.index, self.get_volume());
+      self.envelope_value = self.envelope_period;
     }
   }
 
-  fn get_volume(&self) -> f32 {
-    let vol = if !self.enabled || self.is_sweep_overflowed { // || duty == 0
+  pub fn step_sweep(&mut self) {
+    if self.is_sweep_reload {
+      if self.is_sweep_enabled && self.sweep_value == 0 {
+        self.sweep();
+      }
+      self.sweep_value = self.sweep_period;
+      self.is_sweep_reload = false;
+    } else if self.sweep_value > 0 {
+      self.sweep_value -= 1;
+    } else {
+      if self.is_sweep_enabled {
+        self.sweep();
+      }
+      self.sweep_value = self.sweep_period;
+    }
+  }
+
+  pub fn sweep(&mut self) {
+    let delta = self.timer_period >> self.sweep_shift_amount;
+    if self.is_sweep_negate {
+      self.timer_period -= delta;
+      if self.index == 1 {
+        self.timer_period -= 1;
+      }
+    } else {
+      self.timer_period += delta;
+    }
+  }
+
+  pub fn step_length(&mut self) {
+    if self.is_length_enabled && self.length_value > 0 {
+      self.length_value -= 1;
+    }
+  }
+
+
+  pub fn output(&self) -> u8 {
+    if !self.enabled
+        || self.length_value == 0
+        || DUTY_TABLE[(self.duty * 8 + self.duty_value) as usize] == 0
+        || self.timer_period < 8
+        || self.timer_period > 0x7FF
+    {
       0
     } else if self.is_envelope_enabled {
-      self.envelope_volume
+      self.envelope_volume as u8
     } else {
-      self.envelope_period_and_volume
-    };
-    vol as f32 / (GROBAL_GAIN)
-  }
-
-  pub fn get_duty(&self, duty: usize) -> f32 {
-    match duty {
-      0x00 => 0.125,
-      0x01 => 0.25,
-      0x02 => 0.5,
-      0x03 => 0.75,
-      _ => 0.0,
+      self.constant_volume as u8
     }
   }
 }

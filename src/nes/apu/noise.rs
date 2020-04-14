@@ -71,7 +71,7 @@ impl Noise {
   }
 
   pub fn start(&self) {
-    unsafe { start_noise() };
+    // unsafe { start_noise() };
   }
 
   pub fn stop(&self) {

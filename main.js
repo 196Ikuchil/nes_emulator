@@ -1,6 +1,7 @@
 import Oscillator from './src/nes/webaudio/oscillator.js'
 import Noise from './src/nes/webaudio/noise.js'
 import SRAM from './src/nes/ram/save_ram.js'
+import Audio from './src/js/audio.js'
 
 let buf = null
 let sram_buf = null
@@ -60,16 +61,18 @@ const startArrayBuf = (arrayBuf, rom) => {
     oscs: [new Oscillator(), new Oscillator(), new Oscillator('triangle'), new Oscillator('triangle')],
     noise: new Noise(),
     sram: new SRAM(rom),
+    audio: new Audio(),
   }
   canvas.width = 256
   canvas.height = 240
 
   const nes = new Uint8Array(arrayBuf)
   // add key pad code in tail
-  const size = nes.byteLength + 2
+  const size = nes.byteLength + 3
   const ptr = Module._malloc(size)
   buf = new Uint8Array(Module.HEAPU8.buffer, ptr, size)
   buf.set(nes)
+  // add sram backuped info
   const load_sram = Module.NES.sram.load()
   const sram_size = load_sram.byteLength
   const sram_ptr = Module._malloc(sram_size)
@@ -81,7 +84,7 @@ const startArrayBuf = (arrayBuf, rom) => {
 }
 
 // called from html
-export const start = async (rom = './roms/games/ff3.nes') => {
+export const start = async (rom = './roms/games/smbros.nes') => {
   const res = await fetch(rom);
   const arrayBuf = await res.arrayBuffer();
   startArrayBuf(arrayBuf, rom);

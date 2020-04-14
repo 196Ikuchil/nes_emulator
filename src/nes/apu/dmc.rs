@@ -78,7 +78,7 @@ impl DMC {
   pub fn enable(&mut self) {
     self.is_enabled = true;
     unsafe {
-      start_oscillator(self.index);
+      // start_oscillator(self.index);
     }
     self.is_playing = true;
   }

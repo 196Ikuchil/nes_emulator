@@ -36,5 +36,8 @@ mergeInto(LibraryManager.library, {
   },
   save_sram: function(ptr, len) {
     Module.NES.sram.save(new Uint8Array(Module.HEAPU8.buffer, ptr, len))
+  },
+  audio_output: function(value) {
+    Module.NES.audio.putAudioSamples(value)
   }
 });
