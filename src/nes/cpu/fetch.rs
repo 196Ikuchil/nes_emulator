@@ -24,8 +24,8 @@ pub fn fetch_operand<T: CpuRegister, U: CpuBus>(code: &Opecode, register: &mut T
     Addressing::AbsoluteX => fetch_absolute_x(register, bus),
     Addressing::AbsoluteY => fetch_absolute_y(register, bus),
     Addressing::AbsoluteIndirect => fetch_absolute_indirect(register, bus),
-    Addressing::IndirectX => fetch_indirect_x(register, bus),
-    Addressing::IndirectY => fetch_indirect_y(register, bus),
+    Addressing::IndexedIndirect => fetch_indirect_x(register, bus),
+    Addressing::IndirectIndexed => fetch_indirect_y(register, bus),
     _ => panic!("Invalid code"),
   }
 }
@@ -55,11 +55,17 @@ fn fetch_absolute<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> A
 }
 
 fn fetch_absolute_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
-  fetch_absolute(register, bus) + (register.get_X() as Word)
+  let addr = fetch_absolute(register, bus) + (register.get_X() as Word);
+  let cross = register.page_differ(addr - register.get_X() as Addr, addr);
+  register.set_page_crossed(cross);
+  addr
 }
 
 fn fetch_absolute_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
-  fetch_absolute(register, bus) + (register.get_Y() as Word)
+  let addr = fetch_absolute(register, bus) + (register.get_Y() as Word);
+  let cross = register.page_differ(addr - register.get_Y() as Addr, addr);
+  register.set_page_crossed(cross);
+  addr
 }
 
 fn fetch_absolute_indirect<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
@@ -76,7 +82,10 @@ fn fetch_indirect_x<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) ->
 fn fetch_indirect_y<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) -> Addr {
   let addr = fetch(register, bus) as Addr;
   let base_addr = (bus.read(addr) as usize) + ((bus.read((addr + 1) & 0x00FF) as usize) * 0x100);
-  (base_addr + (register.get_Y() as usize)) as Addr
+  let ret_addr = (base_addr + (register.get_Y() as usize)) as Addr;
+  let cross = register.page_differ(base_addr as Addr, ret_addr);
+  register.set_page_crossed(cross);
+  ret_addr
 }
 
 #[cfg(test)]

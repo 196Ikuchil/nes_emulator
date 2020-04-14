@@ -26,9 +26,9 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &
     irq(register, cpu_bus);
     register.set_interrupt_none();
   }
-  let code = fetch(register, cpu_bus);
+  let ope = fetch(register, cpu_bus);
   let ref opemap = opecodes::OPEMAP;
-  let code = &*opemap.get(&code).unwrap();
+  let code = &*opemap.get(&ope).unwrap();
   let operand = fetch_operand(&code, register, cpu_bus);
 
   match code.name {
@@ -110,14 +110,19 @@ pub fn run<T: CpuRegister, U: CpuBus>(register: &mut T, cpu_bus: &mut U, _nmi: &
     Instruction::LAX => println!("TODO:Undocumented instruction{:?}",code),
     Instruction::SAX => println!("TODO:Undocumented instruction{:?}",code),
     Instruction::DCP => println!("TODO:Undocumented instruction{:?}",code),
-    Instruction::ISB => println!("TODO:Undocumented instruction{:?}",code),
+    Instruction::ISC => println!("TODO:Undocumented instruction{:?}",code),
     Instruction::SLO => println!("TODO:Undocumented instruction{:?}",code),
     Instruction::RLA => println!("TODO:Undocumented instruction{:?}",code),
     Instruction::SRE => println!("TODO:Undocumented instruction{:?}",code),
     Instruction::RRA => println!("TODO:Undocumented instruction{:?}",code),
     _ => panic!("Invalid code{:?}", code),
   }
-  code.cycle
+
+  let crossed_cycle = if register.get_page_crossed() {
+    register.set_page_crossed(false);
+    INSTRUCTION_PAGE_CROSS_CYCLES[ope as usize]
+  } else {0};
+  code.cycle + crossed_cycle + register.pop_additional_cycle()
 }
 
 #[cfg(test)]
