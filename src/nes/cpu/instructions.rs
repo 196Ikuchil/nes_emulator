@@ -10,6 +10,7 @@ pub fn nmi<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   register.set_status_interrupt(true);
   let addr = bus.read_word(0xFFFA);
   register.set_PC(addr);
+  register.add_interrupt_cycle();
 }
 
 pub fn irq<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
@@ -19,6 +20,7 @@ pub fn irq<T: CpuRegister, U: CpuBus>(register: &mut T, bus: &mut U) {
   register.set_status_interrupt(true);
   let addr = bus.read_word(0xFFFE);
   register.set_PC(addr);
+  register.add_interrupt_cycle();
 }
 
 pub fn lda_imm<T: CpuRegister>(operand: Word, register: &mut T) {
@@ -582,6 +584,7 @@ fn rotate_to_right<T: CpuRegister>(register: &mut T, v: Data) -> Data {
 }
 
 fn branch<T: CpuRegister>(addr: Addr, register: &mut T) {
+  register.add_branch_cycle(register.get_PC(), addr);
   register.set_PC(addr);
 }
 
