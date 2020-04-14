@@ -23,6 +23,8 @@ pub struct Register {
   P: Status, // status register
   PC: u16,
   interrupt_type: InterruptType,
+  is_page_crossed: bool,
+  additional_cycle: Data,
 }
 
 pub enum InterruptType {
@@ -56,6 +58,8 @@ impl Register {
         carry: false,
       },
       interrupt_type: InterruptType::NONE,
+      is_page_crossed: false,
+      additional_cycle: 0,
     }
   }
 }
@@ -101,6 +105,13 @@ pub trait CpuRegister {
   fn dec_S(&mut self) -> &mut Self;
   fn get_Status(&mut self) -> Data;
   fn set_Status(&mut self, v: Data) -> &mut Self;
+  fn get_page_crossed(&self) -> bool;
+  fn set_page_crossed(&mut self, b: bool);
+
+  fn page_differ(&mut self, addr1: Addr, addr2: Addr) -> bool;
+  fn add_interrupt_cycle(&mut self);
+  fn add_branch_cycle(&mut self, addr1: Addr, addr2: Addr);
+  fn pop_additional_cycle(&mut self) -> Data;
 }
 
 impl CpuRegister for Register {
@@ -297,6 +308,35 @@ impl CpuRegister for Register {
     self.P.zero = v & 0x02 == 0x02;
     self.P.carry = v & 0x01 == 0x01;
     self
+  }
+
+  fn get_page_crossed(&self) -> bool {
+    self.is_page_crossed
+  }
+
+  fn set_page_crossed(&mut self, b: bool) {
+    self.is_page_crossed = b;
+  }
+
+  fn page_differ(&mut self, addr1: Addr, addr2: Addr) -> bool {
+    (addr1 & 0xFF00) != (addr2 & 0xFF00)
+  }
+
+  fn add_interrupt_cycle(&mut self) {
+    self.additional_cycle += 7;
+  }
+
+  fn add_branch_cycle(&mut self, addr1: Addr, addr2: Addr) {
+    self.additional_cycle += 1;
+    if self.page_differ(addr1, addr2) {
+      self.additional_cycle +=1;
+    }
+  }
+
+  fn pop_additional_cycle(&mut self) -> Data {
+    let c = self.additional_cycle;
+    self.additional_cycle = 0;
+    c
   }
 }
 
