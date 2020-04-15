@@ -11,6 +11,19 @@ Dragon Quest
 <img src="https://user-images.githubusercontent.com/22634362/78538239-a7a8b600-782b-11ea-97a8-a9edfa51ea73.gif" width="300">
 Final FantasyIII
 
+# How to play
+```
+s: START
+a: SELECT
+x: A
+z: B
+←: ←
+→: →
+↑: ↑
+↓: ↓
+R: save current battery backed ram(sram)
+```
+
 # RUN
 ## standalone
 ```
