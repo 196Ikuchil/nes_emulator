@@ -20,12 +20,14 @@ use self::ram::Ram;
 use self::rom::Rom;
 use self::ppu::*;
 use self::dma::*;
+pub use self::helper::*;
 pub use self::types::{Data, Addr, Word};
 
 const DMA_CYCLES: u16 = 514;
 
 #[derive(Debug)]
 pub struct Context {
+  filename: String,
   apu: Apu,
   work_ram: Ram,
   ppu: Ppu,
@@ -57,7 +59,7 @@ pub fn run(ctx: &mut Context, key_state: Data, debug_input: Data){
 
   // debug
   if debug_input & 0x01 == 0x01 {
-    ctx.sram.save();
+    ctx.sram.save(ctx.filename.clone());
   }
 
 
@@ -100,11 +102,18 @@ pub fn get_render_buf(ctx: &mut Context) -> &Vec<u8> {
   ctx.ppu.get_buf()
 }
 
+pub fn load_sram(filename: String) -> Vec<Data> {
+  helper::load_or_init_file(filename)
+}
+
 impl Context {
-  pub fn new(buf: &mut [Data], sram: &mut [Data]) -> Self {
+  pub fn new(buf: &mut [Data], filename: String) -> Self {
     let cassette = cassette_paser::parse(buf);
     let mapper = Mapper::new(&cassette);
+
+    let sram = load_sram(filename.clone());
     Context {
+      filename,
       apu: Apu::new(),
       cpu_register: cpu_register::Register::new(),
       program_rom: Rom::new(cassette.program_rom),

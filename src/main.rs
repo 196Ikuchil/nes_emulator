@@ -1,3 +1,5 @@
+//  from https://github.com/bokuweb/rustynes
+
 #[cfg_attr(test, macro_use)]
 extern crate lazy_static;
 extern crate sdl2;
@@ -28,8 +30,8 @@ const PAD_SELECT: u8 = 0x04;
 const PAD_START: u8  = 0x08;
 const PAD_U: u8      = 0x10;
 const PAD_D: u8      = 0x20;
-const PAD_L: u8      = 0x40;
-const PAD_R: u8      = 0x80;
+const PAD_LEFT: u8      = 0x40;
+const PAD_RIGHT: u8      = 0x80;
 
 fn keycode_to_pad(key: Keycode) -> u8 {
     match key {
@@ -39,8 +41,8 @@ fn keycode_to_pad(key: Keycode) -> u8 {
         Keycode::S => PAD_START,
         Keycode::Up => PAD_U,
         Keycode::Down => PAD_D,
-        Keycode::Left => PAD_L,
-        Keycode::Right => PAD_R,
+        Keycode::Left => PAD_LEFT,
+        Keycode::Right => PAD_RIGHT,
         _ => 0,
     }
 }
@@ -56,7 +58,7 @@ impl App {
     pub fn new() -> App {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
-        let window = video_subsystem.window("rustynes", WIDTH, HEIGHT)
+        let window = video_subsystem.window("nes_emulator", WIDTH, HEIGHT)
             .position_centered()
             .build()
             .unwrap();
@@ -69,10 +71,8 @@ impl App {
         }
     }
 
-    pub fn set_rom(&mut self, mut rom: Vec<u8>) {
-      // TODO:
-      let mut sram = vec!(0;0x2000).to_vec();
-        let mut ctx = Context::new(&mut rom, &mut sram);
+    pub fn set_rom(&mut self, mut rom: Vec<u8>, filename: String) {
+        let mut ctx = Context::new(&mut rom, filename);
         nes::reset(&mut ctx);
         self.ctx = Some(ctx);
     }
@@ -80,6 +80,7 @@ impl App {
     pub fn run(&mut self) {
         let mut event_pump = self.sdl_context.event_pump().unwrap();
         let mut pad = 0;
+        let mut debug = 0;
         let mut prev_time = SystemTime::now();
         'running: loop {
             for event in event_pump.poll_iter() {
@@ -88,6 +89,14 @@ impl App {
                     Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                         break 'running
                     },
+                    Event::KeyDown { keycode: Some(Keycode::R), .. } => {
+                      // Debug
+                      debug |= 0x01;
+                    }
+                    Event::KeyUp { keycode: Some(Keycode::R), .. } => {
+                      // Debug
+                      debug &= !0x01;
+                    }
                     Event::KeyDown { keycode: Some(key), .. } => {
                         pad |= keycode_to_pad(key);
                     },
@@ -98,7 +107,7 @@ impl App {
                 }
             }
 
-            self.update(pad);
+            self.update(pad,debug);
             self.render();
             self.canvas.present();
 
@@ -110,9 +119,8 @@ impl App {
         }
     }
 
-    fn update(&mut self, pad: u8) {
+    fn update(&mut self, pad: u8, debug: u8) {
       // TODO:
-      let debug = 0x00;
         let optctx = &mut self.ctx;
         match optctx {
             Some(ctx) => {
@@ -171,28 +179,31 @@ fn start_noise() {}
 #[no_mangle]
 fn stop_noise() {}
 #[no_mangle]
-fn save_sram(_ptr: *const u8, _len: usize) {}
+fn save_sram(_ptr: *const u8, _len: usize) {
+  println!("save log")
+}
 //#[no_mangle]
 //fn close_noise();
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        eprintln!("<.nes file> required");
-        std::process::exit(1);
-    }
+  let args: Vec<String> = env::args().collect();
+  if args.len() < 2 {
+    eprintln!("<.nes file> required");
+    std::process::exit(1);
+  }
+  let mut app = App::new();
+  let filepath = &args[1];
 
-    let mut app = App::new();
-
-    let filename = &args[1];
-    match fs::read(filename) {
-        Result::Ok(rom) => {
-            app.set_rom(rom);
-            app.run();
-        },
-        Result::Err(err) => {
-            eprintln!("Cannot open .nes file: {}", filename);
-            panic!(err);
-        }
+  match fs::read(filepath) {
+    Result::Ok(rom) => {
+      let filenames: Vec<&str> = args[1].split('/').collect();
+      let filename = filenames.last().unwrap();
+      app.set_rom(rom, filename.to_string());
+      app.run();
+    },
+    Result::Err(err) => {
+      eprintln!("Cannot open .nes file: {}", filepath);
+      panic!(err);
     }
+  }
 }
