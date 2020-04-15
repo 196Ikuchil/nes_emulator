@@ -171,4 +171,8 @@ impl Ppu {
     let x = self.ctx.oam_ram.read(3) as usize;
     self.register.is_sprite_enable() && (y == self.line) && x <= cycle
   }
+
+  pub fn get_buf(&self) -> &Vec<u8> {
+    self.renderer.get_buf()
+  }
 }
