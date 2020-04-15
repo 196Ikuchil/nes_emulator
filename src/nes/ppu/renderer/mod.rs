@@ -106,4 +106,8 @@ impl Renderer {
     // NOTE: If background pixel is not transparent, we need to hide sprite.
     sprite.tile.sprite[y % 8][x % 8] % 4 != 0
   }
+
+  pub fn get_buf(&self) -> &Vec<u8> {
+    &self.buf
+  }
 }
