@@ -96,6 +96,10 @@ pub fn run(ctx: &mut Context, key_state: Data, debug_input: Data){
   }
 }
 
+pub fn get_render_buf(ctx: &mut Context) -> &Vec<u8> {
+  ctx.ppu.get_buf()
+}
+
 impl Context {
   pub fn new(buf: &mut [Data], sram: &mut [Data]) -> Self {
     let cassette = cassette_paser::parse(buf);
