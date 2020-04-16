@@ -1,4 +1,5 @@
 mod apu;
+pub mod audio;
 mod bus;
 mod cassette_paser;
 mod cpu;
@@ -22,6 +23,7 @@ use self::ppu::*;
 use self::dma::*;
 pub use self::helper::*;
 pub use self::types::{Data, Addr, Word};
+pub use self::audio::*;
 
 const DMA_CYCLES: u16 = 514;
 
@@ -107,14 +109,14 @@ pub fn load_sram(filename: String) -> Vec<Data> {
 }
 
 impl Context {
-  pub fn new(buf: &mut [Data], filename: String) -> Self {
+  pub fn new(buf: &mut [Data], audio: Box<Audio>, filename: String) -> Self {
     let cassette = cassette_paser::parse(buf);
     let mapper = Mapper::new(&cassette);
 
     let sram = load_sram(filename.clone());
     Context {
       filename,
-      apu: Apu::new(),
+      apu: Apu::new(audio),
       cpu_register: cpu_register::Register::new(),
       program_rom: Rom::new(cassette.program_rom),
       ppu: Ppu::new(

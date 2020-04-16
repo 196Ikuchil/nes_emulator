@@ -10,6 +10,7 @@ use sdl2::keyboard::{Keycode};
 use sdl2::pixels::{Color};
 use sdl2::render::{WindowCanvas};
 use sdl2::rect::{Point};
+use sdl2::AudioSubsystem;
 
 use std::time::{Duration, SystemTime};
 
@@ -18,6 +19,7 @@ use std::fs;
 mod nes;
 
 use nes::Context;
+use nes::audio::Sdl2Audio;
 use std::string::String;
 
 const WIDTH: u32 = 256;
@@ -49,7 +51,6 @@ fn keycode_to_pad(key: Keycode) -> u8 {
 pub struct App {
     sdl_context: Sdl,
     canvas: WindowCanvas,
-
     ctx: Option<Context>,
 }
 
@@ -62,7 +63,6 @@ impl App {
             .build()
             .unwrap();
         let canvas = window.into_canvas().build().unwrap();
-
         App {
             sdl_context,
             canvas,
@@ -71,9 +71,10 @@ impl App {
     }
 
     pub fn set_rom(&mut self, mut rom: Vec<u8>, filename: String) {
-        let mut ctx = Context::new(&mut rom, filename);
-        nes::reset(&mut ctx);
-        self.ctx = Some(ctx);
+      let mut audio = Box::new(Sdl2Audio::new(self.sdl_context.audio().unwrap()));
+      let mut ctx = Context::new(&mut rom, audio ,filename);
+      nes::reset(&mut ctx);
+      self.ctx = Some(ctx);
     }
 
     pub fn run(&mut self) {
@@ -112,7 +113,7 @@ impl App {
 
             let elapsed_time = SystemTime::now().duration_since(prev_time).expect("Time went backwards").as_nanos();
             let wait = if elapsed_time < 1_000_000_000u128 / 60 { 1_000_000_000u32 / 60 - (elapsed_time as u32) } else { 0 };
-            ::std::thread::sleep(Duration::new(0, wait));
+            // ::std::thread::sleep(Duration::new(0, wait));
 
             prev_time = SystemTime::now();
         }
@@ -180,6 +181,10 @@ fn stop_noise() {}
 #[no_mangle]
 fn save_sram(_ptr: *const u8, _len: usize) {
   println!("save log")
+}
+#[no_mangle]
+fn audio_output(vol: f32) {
+
 }
 //#[no_mangle]
 //fn close_noise();

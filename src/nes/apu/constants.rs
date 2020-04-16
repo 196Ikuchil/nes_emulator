@@ -1,5 +1,11 @@
 pub const CPU_CLOCK: usize = 1789772;
 
+// standard sample rate in music (follow js & browser)
+pub const BROWSER_SAMPLE_RATE: usize = 44100;
+
+pub const APU_SAMPLE_RATE: usize = CPU_CLOCK / BROWSER_SAMPLE_RATE;
+
+// frameCounterRate
 pub const DIVIDE_COUNT_FOR_240HZ: u16 = 7457;
 
 // ref. http://pgate1.at-ninja.jp/NES_on_FPGA/nes_apu.htm
@@ -14,6 +20,15 @@ pub const GROBAL_GAIN: f32 = 10.0;
 pub const NOISE_TIMER_PERIOD_TABLE: &'static [u16] = &[0x004, 0x008, 0x010, 0x020, 0x040, 0x060,
                                                       0x080, 0x0A0, 0x0CA, 0x0FE, 0x17C, 0x1FC,
                                                       0x2FA, 0x3F8, 0x7F2, 0xFE4];
+
+pub const TRIANGLE_TABLE: &'static [u8] = &[0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08,
+                                            0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00,
+                                            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                            0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+pub const DUTY_TABLE: &'static [u8] = &[0, 1, 0, 0, 0, 0, 0, 0,
+                                        0, 1, 1, 0, 0, 0, 0, 0,
+                                        0, 1, 1, 1, 1, 0, 0, 0,
+                                        1, 0, 0, 1, 1, 1, 1, 1];
 
 pub const DMC_NTSC_TABLE: &'static [u16] = &[0x1AC, 0x17C, 0x154, 0x140, 0x11E, 0x0FE, 0x0E2, 0x0D6,
                                              0x0BE, 0x0A0, 0x08E, 0x080, 0x06A, 0x054, 0x048, 0x036];

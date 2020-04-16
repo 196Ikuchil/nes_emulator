@@ -3,17 +3,21 @@ mod triangle;
 mod noise;
 mod dmc;
 mod constants;
+mod filter;
 
 use self::constants::*;
 use self::square::Square;
 use self::triangle::Triangle;
 use self::noise::Noise;
 use self::dmc::DMC;
+use self::filter::Filter;
 use super::types::{Data, Addr};
 use super::mapper::Mapper;
 use super::Rom;
 use super::Ram;
 use super::CpuRegister;
+use super::audio::*;
+
 
 #[derive(Debug)]
 pub struct Apu {
@@ -25,10 +29,22 @@ pub struct Apu {
   step: usize,
   sequencer_mode: bool, // t => mode 1, f => mode 0
   enable_irq: bool,
+  filter_chain: [Filter;3],
+  pulse_table: Vec<f32>,
+  tnd_table: Vec<f32>,
+  audio: Box<Audio>,
 }
 
 impl Apu {
-  pub fn new() -> Self {
+  pub fn new(audio: Box<Audio>) -> Self {
+    let mut pt = Vec::new();
+    let mut tt = Vec::new();
+    for i in 0..31 {
+      pt.push( 95.52 / (8128.0 / i as f32 + 100.0));
+    }
+    for i in 0..203 {
+      tt.push(163.67 / (24329.0 / i as f32 + 100.0));
+    }
     Apu {
       squares: (Square::new(0), Square::new(1)),
       triangle: Triangle::new(2),
@@ -38,73 +54,124 @@ impl Apu {
       step: 0,
       sequencer_mode: false,
       enable_irq: false,
+      filter_chain: [
+        Filter::new_as_high_pass_filter(90 as f32),
+        Filter::new_as_high_pass_filter(440 as f32),
+        Filter::new_as_low_pass_filter(14000 as f32),
+      ],
+      pulse_table: pt.clone(),
+      tnd_table: tt.clone(),
+      audio,
     }
   }
+
+  // step
   pub fn run<T: CpuRegister>(&mut self, cycle: u16,register: &mut T, mapper: &mut dyn Mapper, sram: &Ram, prg_rom: &Rom, stall: &mut u8) {
-    self.cycle += cycle;
     for _ in 0..cycle {
+      let cycle1 = self.cycle;
+      self.cycle += 1;
+      let cycle2 = self.cycle;
       self.step_timers(mapper, sram, prg_rom, stall);
+
+      let f1 = (cycle1 as f64 / DIVIDE_COUNT_FOR_240HZ as f64) as u16;
+      let f2 = (cycle2 as f64 / DIVIDE_COUNT_FOR_240HZ as f64) as u16;
+      if f1 != f2 {
+        self.step_frame_counter(register);
+      }
+      let s1 = (cycle1 as f64 / (APU_SAMPLE_RATE as f64)) as u16;
+      let s2 = (cycle2 as f64 / (APU_SAMPLE_RATE as f64)) as u16;
+      if s1 != s2 {
+        self.send_sample();
+      }
     }
-    if self.cycle >= DIVIDE_COUNT_FOR_240HZ {
-      // TODO: invoked by 240hz
-      self.cycle -= DIVIDE_COUNT_FOR_240HZ;
-      if self.sequencer_mode {
-        self.update_by_sequence_mode1();
-      } else {
-        self.update_by_sequence_mdoe0(register);
+    self.resume_audio();
+  }
+
+  fn step_frame_counter<T: CpuRegister>(&mut self, register: &mut T) {
+    if !self.sequencer_mode { // step4
+      self.step = (self.step + 1) % 4;
+      match self.step {
+        0 | 2 => {
+          self.step_envelope();
+        }
+        1 => {
+          self.step_envelope();
+          self.step_sweep();
+          self.step_length();
+        }
+        3 => {
+          self.step_envelope();
+          self.step_sweep();
+          self.step_length();
+          if self.enable_irq {
+            register.set_interrupt_irq();
+          }
+        }
+        _ => panic!("step error step{:?}", self.step),
+      }
+    } else { // step5
+      self.step = (self.step + 1) % 5;
+      match self.step {
+        0 | 2 => {
+          self.step_envelope();
+        }
+        1 | 3 => {
+          self.step_envelope();
+          self.step_sweep();
+          self.step_length();
+        }
+        4 => {}
+        _ => panic!("step error")
       }
     }
   }
 
-  // step 4
-  fn update_by_sequence_mdoe0<T: CpuRegister>(&mut self, register: &mut T) {
-    if self.step % 2 == 1 {
-      self.update_counters();
-    }
-    self.step += 1;
-    if self.step == 4 {
-      if self.enable_irq {
-        register.set_interrupt_irq();
-      }
-      self.step = 0;
-    }
-    self.update_envelope();
+  fn send_sample(&mut self) {
+    // let output = self.output();
+    let output = self.step_filter_chain(self.output());
+    self.audio.push(output);
   }
 
-  // step 5
-  fn update_by_sequence_mode1(&mut self) {
-    if self.step % 2 == 0 {
-      self.update_counters();
-    }
-    self.step += 1;
-    if self.step == 5 {
-      self.step = 0;
-    } else {
-      self.update_envelope();
-    }
+  pub fn resume_audio(&mut self) {
+		self.audio.resume();
+	}
+
+  fn output(&self) -> f32 {
+    let p1 = self.squares.0.output() as f32;
+    let p2 = self.squares.1.output() as f32;
+    let t = self.triangle.output() as f32;
+    let n = 0.0;//self.noise.output();
+    let d = 0.0;//self.dmc.output();
+    self.pulse_table[(p1 + p2) as usize] + self.tnd_table[((3.0 * t) + (2.0 * n + d)) as usize]
   }
 
-  // generate envelope & linear clock
-  fn update_envelope(&mut self) {
-    self.squares.0.update_envelope();
-    self.squares.1.update_envelope();
-    self.noise.update_envelope();
+  fn step_envelope(&mut self) {
+    self.squares.0.step_envelope();
+    self.squares.1.step_envelope();
+    self.triangle.step_counter();
+    // self.noise.stepEnvelope();
   }
 
-  // generate length counter & sweep ckock
-  fn update_counters(&mut self) {
-    self.squares.0.update_counters();
-    self.squares.1.update_counters();
-    self.triangle.update_counter();
-    self.noise.update_counter();
+  fn step_sweep(&mut self) {
+    self.squares.0.step_sweep();
+    self.squares.1.step_sweep();
   }
 
-  // TODO:
+  fn step_length(&mut self) {
+    self.squares.0.step_length();
+    self.squares.1.step_length();
+    self.triangle.step_length();
+    // self.noise.stepLength()
+  }
+
   fn step_timers(&mut self, mapper: &mut dyn Mapper, sram: &Ram, prg_rom: &Rom, stall: &mut u8) {
-    self.dmc.step_timer(mapper, sram, prg_rom, stall);
-    // if cycle%2 == 0 {
-    //   self.noise.step_timer();
-    // }
+    if self.cycle%2 == 0 {
+      self.squares.0.step_timer();
+      self.squares.1.step_timer();
+      // self.noise.step_timer();
+      // self.dmc.step_timer(mapper, sram, prg_rom, stall);
+    }
+    self.triangle.step_timer();
   }
 
   pub fn read(&mut self, addr: Addr) -> Data {
@@ -178,20 +245,35 @@ impl Apu {
           self.noise.enable();
         } else {
           self.noise.disable();
+          // self.noise.length_value = 0;
         }
         if data & 0x10 == 0x10 {
           self.dmc.enable();
+          // if self.dmc.currentLength == 0 {
+            // self.dmc.restart();
         } else {
           self.dmc.disable();
+          // self.dmc.length_value = 0;
         }
       }
       0x17 => {
         self.sequencer_mode = data & 0x80 == 0x80;
         self.enable_irq = data & 0x40 != 0x40; // actually it keeps wherer irq is disabled
-        self.step = 0;
-        self.cycle = 0;
+        if self.sequencer_mode { // step5
+          self.step_envelope();
+          self.step_sweep();
+          self.step_length();
+        }
       }
       _ => (),
     }
   }
-}
+
+  pub fn step_filter_chain(&mut self, x: f32) -> f32 {
+    let mut v = x;
+    for f in &mut self.filter_chain {
+      v = f.Step(v);
+    }
+    v
+  }
+ }
