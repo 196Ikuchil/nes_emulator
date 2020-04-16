@@ -16,7 +16,6 @@ use std::time::{Duration, SystemTime};
 use std::env;
 use std::fs;
 mod nes;
-mod externs;
 
 use nes::Context;
 use std::string::String;
