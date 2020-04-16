@@ -1,6 +1,6 @@
 # nes_emulator
 
-NES Emulator written in Rust  
+NES Emulator written in Rust
 
 <img src="https://user-images.githubusercontent.com/22634362/77064099-2d51f680-6a22-11ea-801d-fb1feee6ad46.gif" width="400">
 Super Mario Bros.
@@ -11,13 +11,24 @@ Dragon Quest
 <img src="https://user-images.githubusercontent.com/22634362/78538239-a7a8b600-782b-11ea-97a8-a9edfa51ea73.gif" width="300">
 Final FantasyIII
 
+# How to play
+```
+s: START
+a: SELECT
+x: A
+z: B
+←: ←
+→: →
+↑: ↑
+↓: ↓
+R: save current battery backed ram(sram)
+```
+
 # RUN
-## wasm
+## standalone
 ```
 $ make
-$ npm install
-$ npm start
-$ open http://localhost:10080
+$ cargo run --release roms/****.nes
 ```
 
 ## test
@@ -26,15 +37,16 @@ $cargo test
 ```
 
 # Refereneces
-## main code & copyright 
+## main code & copyright
 from https://github.com/bokuweb/rustynes
 Copyright (c) 2018 @bokuweb
 ## code
-- sample code from: 
+- sample code from:
   - https://github.com/kamiyaowl/rust-nes-emulator
 - `apu` sample code from:
   - https://github.com/fogleman/nes/blob/b2c994703237bdbe006c52809fecbbbc9ac35dd6/nes/apu.go
-  
+  - https://github.com/takahirox/nes-rust
+
 ## website
 - http://wiki.nesdev.com/w/index.php/Programming_guide
 - http://pgate1.at-ninja.jp/NES_on_FPGA/nes_apu.htm
@@ -51,7 +63,7 @@ Copyright (c) 2018 @bokuweb
   - https://wiki.nesdev.com/w/index.php/Emulator_tests
 - other test roms
   - https://wiki.nesdev.com/w/index.php/Emulator_tests
-  
+
 # TODO
 - Mappers
   - [x] Mapper3
@@ -60,5 +72,5 @@ Copyright (c) 2018 @bokuweb
   - [x] DMC
   - [ ] sweep not correct work
   - [x] irq
-  
-  
+
+

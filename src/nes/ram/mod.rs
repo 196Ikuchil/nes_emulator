@@ -1,12 +1,9 @@
 use super::types::{Data, Addr};
+use super::helper::*;
 
 #[derive(Debug)]
 pub struct Ram {
   pub field: Vec<Data>,
-}
-
-extern "C" {
-  fn save_sram(ptr: *const Data, len: usize);
 }
 
 impl Ram {
@@ -26,9 +23,7 @@ impl Ram {
     self.field.len()
   }
 
-  pub fn save(&self) {
-    unsafe {
-      save_sram(self.field.as_ptr(),self.field.len());
-    }
+  pub fn save(&self, filename: String) {
+    save_file(filename, &self.field);
   }
 }
